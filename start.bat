@@ -84,7 +84,7 @@ echo ======================================================================
 echo    📜 LIVE LOGS BACKEND (Tekan Ctrl+C untuk kembali ke menu)
 echo ======================================================================
 echo.
-call pm2 logs 1win-sniper-hub --lines 30
+call pm2 logs 1win-sniper-hub 1win-tunnel --lines 30
 echo.
 echo Tekan sembarang tombol untuk kembali ke menu...
 pause >nul

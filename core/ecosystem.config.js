@@ -2,20 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-// Deteksi IP Lokal LAN aktif secara otomatis
-function getLocalIp() {
-  try {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-  } catch (e) {}
-  return '127.0.0.1';
-}
 
 const rootDir = path.resolve(__dirname, '..');
 const isWin = process.platform === 'win32';

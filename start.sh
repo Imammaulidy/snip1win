@@ -4,8 +4,6 @@
 #  Backend: Port 6000 (Auto Local IP) • Domain: https://topnodtools.web.id
 # ======================================================================
 
-set -e
-
 # Non-interactive mode agar tidak memunculkan popup konfigurasi kernel/layar merah di VPS
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
@@ -54,12 +52,15 @@ else
     ARCH="$(uname -m)"
     echo "[*] Mengunduh binary Cloudflared ($ARCH)..."
     if [ "$ARCH" = "x86_64" ]; then
-      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" -o core/bin/cloudflared
-      chmod +x core/bin/cloudflared
+      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" -o core/bin/cloudflared || true
+      chmod +x core/bin/cloudflared 2>/dev/null || true
     elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" -o core/bin/cloudflared
-      chmod +x core/bin/cloudflared
+      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" -o core/bin/cloudflared || true
+      chmod +x core/bin/cloudflared 2>/dev/null || true
     fi
+  fi
+  if [ -f "core/bin/cloudflared" ]; then
+    chmod +x core/bin/cloudflared 2>/dev/null || true
   fi
 fi
 
@@ -112,7 +113,7 @@ fi
 # Verifikasi dependensi wajib sebelum menjalankan PM2
 echo "[*] Memverifikasi modul aiohttp & solana..."
 if ! $PYTHON_EXEC -c "import aiohttp, telegram, solana" >/dev/null 2>&1; then
-  echo "[!] Mencoba instalasi aiohttp langsung..."
+  echo "[!] Mencoba instalasi modul langsung..."
   $PIP_EXEC install aiohttp httpx solana solders python-telegram-bot base58 --break-system-packages || \
   $PIP_EXEC install aiohttp httpx solana solders python-telegram-bot base58 || true
 fi
@@ -129,8 +130,14 @@ fi
 
 # 6. Jalankan PM2 (Restart proses jika sebelumnya crash / bermasalah)
 echo "[*] Menjalankan 1win-sniper-hub & Cloudflare Tunnel via PM2..."
+pkill -9 -f "cloudflared" 2>/dev/null || true
+pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
 pm2 delete 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
-pm2 start core/ecosystem.config.js
+pm2 start core/ecosystem.config.js || {
+  echo "[!] PM2 daemon mengalami kendala PID, merefresh daemon via pm2 update..."
+  pm2 update || true
+  pm2 start core/ecosystem.config.js || true
+}
 pm2 save >/dev/null 2>&1 || true
 
 # 7. Tampilkan Interface Menu Interaktif
@@ -148,16 +155,17 @@ while true; do
   echo "======================================================================"
   echo ""
   echo "   [1] 📊 Lihat Status Proses (1win-sniper-hub & 1win-tunnel)"
-  echo "   [2] 📜 Lihat Live Logs Backend (Realtime Stream)"
+  echo "   [2] 📜 Lihat Live Logs Backend & Tunnel (Realtime Stream)"
   echo "   [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)"
   echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)"
   echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)"
   echo "   [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub & 1win-tunnel)"
   echo "   [7] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
+  echo "   [8] 🛠️ Perbaiki PM2 Daemon (pm2 update / heal PID error)"
   echo "   [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)"
   echo ""
   echo "======================================================================"
-  read -r -p "Pilih menu [0-7]: " opt
+  read -r -p "Pilih menu [0-8]: " opt
 
   case "$opt" in
     1)
@@ -173,10 +181,10 @@ while true; do
     2)
       clear
       echo "======================================================================"
-      echo "   📜 LIVE LOGS BACKEND (Tekan Ctrl+C untuk kembali ke menu)"
+      echo "   📜 LIVE LOGS BACKEND & TUNNEL (Tekan Ctrl+C untuk kembali ke menu)"
       echo "======================================================================"
       echo ""
-      pm2 logs 1win-sniper-hub --lines 30
+      pm2 logs 1win-sniper-hub 1win-tunnel --lines 30
       echo ""
       read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
@@ -186,12 +194,14 @@ while true; do
       echo "   🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      echo "[*] Merestart 1win-sniper-hub..."
-      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub
-      echo "[*] Merestart 1win-tunnel..."
-      pkill -f "topnodtools" 2>/dev/null || true
+      echo "[*] Membersihkan proses tunnel lama..."
+      pkill -9 -f "cloudflared" 2>/dev/null || true
+      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
       sleep 1
-      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel
+      echo "[*] Merestart 1win-sniper-hub..."
+      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub || true
+      echo "[*] Merestart 1win-tunnel..."
+      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!"
@@ -207,7 +217,8 @@ while true; do
       pm2 stop 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Menghentikan 1win-tunnel..."
       pm2 stop 1win-tunnel >/dev/null 2>&1 || true
-      pkill -f "topnodtools" 2>/dev/null || true
+      pkill -9 -f "cloudflared" 2>/dev/null || true
+      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
@@ -219,21 +230,15 @@ while true; do
       echo "   🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      echo "[*] Memulai 1win-sniper-hub..."
-      if pm2 describe 1win-sniper-hub >/dev/null 2>&1; then
-        pm2 restart 1win-sniper-hub
-      else
-        pm2 start core/ecosystem.config.js --only 1win-sniper-hub
-      fi
-
-      echo "[*] Memulai 1win-tunnel..."
-      pkill -f "topnodtools" 2>/dev/null || true
+      echo "[*] Membersihkan proses tunnel lama..."
+      pkill -9 -f "cloudflared" 2>/dev/null || true
+      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
       sleep 1
-      if pm2 describe 1win-tunnel >/dev/null 2>&1; then
-        pm2 restart 1win-tunnel
-      else
-        pm2 start core/ecosystem.config.js --only 1win-tunnel
-      fi
+      echo "[*] Memulai service 1win-sniper-hub & 1win-tunnel..."
+      pm2 start core/ecosystem.config.js || {
+        pm2 restart 1win-sniper-hub 2>/dev/null || pm2 start core/ecosystem.config.js --only 1win-sniper-hub || true
+        pm2 restart 1win-tunnel 2>/dev/null || pm2 start core/ecosystem.config.js --only 1win-tunnel || true
+      }
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!"
@@ -249,7 +254,8 @@ while true; do
       pm2 delete 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Menghapus 1win-tunnel dari PM2..."
       pm2 delete 1win-tunnel >/dev/null 2>&1 || true
-      pkill -f "topnodtools" 2>/dev/null || true
+      pkill -9 -f "cloudflared" 2>/dev/null || true
+      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!"
@@ -320,6 +326,21 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
       echo ""
       read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
+    8)
+      clear
+      echo "======================================================================"
+      echo "   🛠️ MEMPERBAIKI PM2 DAEMON (HEAL STUCK PID / PM2_ENV)"
+      echo "======================================================================"
+      echo ""
+      echo "[*] Menjalankan pm2 update untuk membersihkan state PM2 yang korup..."
+      pkill -9 -f "cloudflared" 2>/dev/null || true
+      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+      pm2 update
+      echo ""
+      echo "[OK] PM2 Daemon berhasil disegarkan! Semua service tetap aman."
+      echo ""
+      read -r -p "Tekan Enter untuk kembali ke menu..." dummy
+      ;;
     0)
       clear
       echo "======================================================================"
@@ -329,7 +350,7 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
       exit 0
       ;;
     *)
-      echo "[!] Pilihan tidak valid. Silakan pilih 0-6."
+      echo "[!] Pilihan tidak valid. Silakan pilih 0-8."
       sleep 2
       ;;
   esac

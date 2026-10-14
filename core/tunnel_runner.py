@@ -9,7 +9,10 @@ import sys
 import time
 import socket
 import signal
+import platform
 import subprocess
+import urllib.request
+import shutil
 from pathlib import Path
 
 # Ensure UTF-8 output even in non-UTF-8 console/PM2 pipes on Windows
@@ -39,8 +42,16 @@ def get_local_ip() -> str:
 
 def find_cloudflared() -> str:
     is_win = sys.platform == "win32"
+    local_bin = CORE_DIR / "bin" / ("cloudflared.exe" if is_win else "cloudflared")
+    if local_bin.exists():
+        if not is_win:
+            try:
+                os.chmod(local_bin, 0o755)
+            except Exception:
+                pass
+        return str(local_bin)
+
     candidates = [
-        CORE_DIR / "bin" / ("cloudflared.exe" if is_win else "cloudflared"),
         Path("/data/data/com.termux/files/usr/bin/cloudflared"),
         Path("/usr/local/bin/cloudflared"),
         Path("/usr/bin/cloudflared"),
@@ -48,6 +59,35 @@ def find_cloudflared() -> str:
     for p in candidates:
         if p.exists() and os.access(p, os.X_OK if not is_win else os.F_OK):
             return str(p)
+
+    which = shutil.which("cloudflared")
+    if which:
+        return which
+
+    # Auto-download for Linux / VPS if missing
+    if not is_win:
+        arch = platform.machine().lower()
+        url = None
+        if arch in ("x86_64", "amd64"):
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+        elif arch in ("aarch64", "arm64"):
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+
+        if url:
+            target = CORE_DIR / "bin" / "cloudflared"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            print(f"[*] Mengunduh binary cloudflared ({arch}) dari {url}...")
+            sys.stdout.flush()
+            try:
+                urllib.request.urlretrieve(url, target)
+                os.chmod(target, 0o755)
+                print(f"[OK] Cloudflared berhasil diunduh ke {target}")
+                sys.stdout.flush()
+                return str(target)
+            except Exception as e:
+                print(f"[!] Gagal mengunduh cloudflared: {e}")
+                sys.stdout.flush()
+
     return "cloudflared"
 
 def load_env():
@@ -83,23 +123,25 @@ def main():
     print("=" * 60)
     sys.stdout.flush()
 
-    creationflags = 0
+    kwargs = {}
     if sys.platform == "win32":
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        kwargs["creationflags"] = creationflags
 
     proc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        creationflags=creationflags,
         text=True,
         bufsize=1,
         encoding="utf-8",
-        errors="replace"
+        errors="replace",
+        **kwargs
     )
 
     def handle_signal(sig, frame):
         print(f"\n[Tunnel] Menghentikan cloudflared (PID {proc.pid})...")
+        sys.stdout.flush()
         try:
             proc.terminate()
             proc.wait(timeout=3)
