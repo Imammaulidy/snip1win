@@ -1,10 +1,14 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ======================================================================
 #  1WIN TOKEN SALE SNIPER HUB - ALL-IN-ONE LAUNCHER & MENU (LINUX / TERMUX)
 #  Backend: Port 6000 (Auto Local IP) • Domain: https://topnodtools.web.id
 # ======================================================================
 
 set -e
+
+# Non-interactive mode agar tidak memunculkan popup konfigurasi kernel/layar merah di VPS
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
