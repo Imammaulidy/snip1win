@@ -131,15 +131,18 @@ module.exports = {
     },
     {
       name: '1win-tunnel',
-      script: cloudflaredPath,
-      args: tunnelArgs,
+      script: 'core/tunnel_runner.py',
       cwd: rootDir,
-      interpreter: 'none',
+      interpreter: pythonPath,
       windowsHide: true,
       autorestart: true,
       watch: false,
       restart_delay: 3000,
-      min_uptime: '5s'
+      min_uptime: '5s',
+      env: {
+        PYTHONUNBUFFERED: '1',
+        PYTHONPATH: rootDir
+      }
     }
   ]
 };
