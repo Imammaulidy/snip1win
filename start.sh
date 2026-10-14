@@ -290,8 +290,22 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
       echo "   🌐 SETUP REVERSE PROXY NGINX & SSL (botmicin.web.id)"
       echo "======================================================================"
       echo ""
+      AUTO_LOCAL_IP=$($PYTHON_EXEC -c "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('8.8.8.8', 80)); print(s.getsockname()[0]); s.close()" 2>/dev/null)
+      if [ -z "$AUTO_LOCAL_IP" ]; then
+        AUTO_LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7}' | head -n 1)
+      fi
+      if [ -z "$AUTO_LOCAL_IP" ]; then
+        AUTO_LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+      fi
+      if [ -z "$AUTO_LOCAL_IP" ]; then
+        AUTO_LOCAL_IP="10.0.0.4"
+      fi
+
+      echo "Target Domain : https://botmicin.web.id"
+      echo "Backend Target: http://${AUTO_LOCAL_IP}:6000 (Murni IP Lokal Otomatis)"
+      echo ""
       echo "Menu ini akan mengonfigurasi Nginx di VPS untuk merutekan:"
-      echo "https://botmicin.web.id -> http://127.0.0.1:6000"
+      echo "https://botmicin.web.id -> http://${AUTO_LOCAL_IP}:6000"
       echo ""
       read -r -p "Lanjutkan konfigurasi otomatis Nginx? (y/n): " confirm_nginx
       if [[ "$confirm_nginx" =~ ^[Yy]$ ]]; then
@@ -303,26 +317,26 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
           sudo yum install -y epel-release && sudo yum install -y nginx certbot python3-certbot-nginx || true
         fi
 
-        echo "[2/4] Membuat konfigurasi Nginx untuk botmicin.web.id..."
+        echo "[2/4] Membuat konfigurasi Nginx untuk botmicin.web.id (Upstream: http://${AUTO_LOCAL_IP}:6000)..."
         NGINX_CONF="/etc/nginx/sites-available/botmicin"
         if [ ! -d "/etc/nginx/sites-available" ]; then
           NGINX_CONF="/etc/nginx/conf.d/botmicin.conf"
         fi
 
-        sudo bash -c "cat > '$NGINX_CONF' << 'EOF'
+        sudo bash -c "cat > '$NGINX_CONF' << EOF
 server {
     listen 80;
     server_name botmicin.web.id www.botmicin.web.id;
 
     location / {
-        proxy_pass http://127.0.0.1:6000;
+        proxy_pass http://${AUTO_LOCAL_IP}:6000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade \\\$http_upgrade;
         proxy_set_header Connection \"upgrade\";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
     }
 }
 EOF"
