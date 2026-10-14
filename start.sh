@@ -152,11 +152,12 @@ while true; do
   echo "   [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)"
   echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)"
   echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)"
-  echo "   [6] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
+  echo "   [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub & 1win-tunnel)"
+  echo "   [7] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
   echo "   [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)"
   echo ""
   echo "======================================================================"
-  read -r -p "Pilih menu [0-6]: " opt
+  read -r -p "Pilih menu [0-7]: " opt
 
   case "$opt" in
     1)
@@ -188,6 +189,8 @@ while true; do
       echo "[*] Merestart 1win-sniper-hub..."
       pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub
       echo "[*] Merestart 1win-tunnel..."
+      pkill -f "topnodtools" 2>/dev/null || true
+      sleep 1
       pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel
       pm2 save >/dev/null 2>&1 || true
       echo ""
@@ -204,6 +207,7 @@ while true; do
       pm2 stop 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Menghentikan 1win-tunnel..."
       pm2 stop 1win-tunnel >/dev/null 2>&1 || true
+      pkill -f "topnodtools" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
@@ -223,6 +227,8 @@ while true; do
       fi
 
       echo "[*] Memulai 1win-tunnel..."
+      pkill -f "topnodtools" 2>/dev/null || true
+      sleep 1
       if pm2 describe 1win-tunnel >/dev/null 2>&1; then
         pm2 restart 1win-tunnel
       else
@@ -234,6 +240,23 @@ while true; do
       sleep 2
       ;;
     6)
+      clear
+      echo "======================================================================"
+      echo "   🗑️ HAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB & 1WIN-TUNNEL)"
+      echo "======================================================================"
+      echo ""
+      echo "[*] Menghapus 1win-sniper-hub dari PM2..."
+      pm2 delete 1win-sniper-hub >/dev/null 2>&1 || true
+      echo "[*] Menghapus 1win-tunnel dari PM2..."
+      pm2 delete 1win-tunnel >/dev/null 2>&1 || true
+      pkill -f "topnodtools" 2>/dev/null || true
+      pm2 save >/dev/null 2>&1 || true
+      echo ""
+      echo "[OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!"
+      echo "     (Service lain seperti depilQR & depilStellar tetap aman)."
+      sleep 2
+      ;;
+    7)
       clear
       echo "======================================================================"
       echo "   🔑 SET / UBAH TOKEN BOT TELEGRAM"

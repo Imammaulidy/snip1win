@@ -37,29 +37,30 @@ echo    Platform : Windows
 echo    Backend  : Port 6000 (Auto Local IP)
 echo    Domain   : https://topnodtools.web.id
 echo ======================================================================
-echo.
 echo    [1] 📊 Lihat Status Proses (1win-sniper-hub & 1win-tunnel)
 echo    [2] 📜 Lihat Live Logs Backend (Realtime Stream)
 echo    [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)
 echo    [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)
 echo    [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)
-echo    [6] 🔑 Set / Ubah Token Telegram Bot (Paste Token Langsung)
-echo    [7] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
+echo    [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub & 1win-tunnel)
+echo    [7] 🔑 Set / Ubah Token Telegram Bot (Paste Token Langsung)
+echo    [8] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
 echo    [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)
 echo.
 echo ======================================================================
-set /p opt="Pilih menu [0-7]: "
+set /p opt="Pilih menu [0-8]: "
 
 if "%opt%"=="1" goto STATUS
 if "%opt%"=="2" goto LOGS
 if "%opt%"=="3" goto RESTART
 if "%opt%"=="4" goto STOP
 if "%opt%"=="5" goto START
-if "%opt%"=="6" goto SET_TOKEN
-if "%opt%"=="7" goto OPEN_WEB
+if "%opt%"=="6" goto DELETE
+if "%opt%"=="7" goto SET_TOKEN
+if "%opt%"=="8" goto OPEN_WEB
 if "%opt%"=="0" goto EXIT
 
-echo [!] Pilihan tidak valid. Silakan pilih 0-7.
+echo [!] Pilihan tidak valid. Silakan pilih 0-8.
 timeout /t 2 >nul
 goto MENU
 
@@ -144,6 +145,23 @@ if %errorlevel% equ 0 (
 pm2 save >nul 2>&1
 echo.
 echo [OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!
+echo.
+timeout /t 2 >nul
+goto MENU
+
+:DELETE
+cls
+echo ======================================================================
+echo    🗑️ MENGHAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB & 1WIN-TUNNEL)
+echo ======================================================================
+echo.
+echo [*] Menghapus 1win-sniper-hub dari PM2...
+pm2 delete 1win-sniper-hub >nul 2>&1
+echo [*] Menghapus 1win-tunnel dari PM2...
+pm2 delete 1win-tunnel >nul 2>&1
+pm2 save >nul 2>&1
+echo.
+echo [OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!
 echo.
 timeout /t 2 >nul
 goto MENU
