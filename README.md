@@ -1,13 +1,13 @@
 # 🪙 1WIN Token Sale Sniper Hub (Telegram Bot & Web Terminal)
 
-Bot sniper presale & DEX resmi untuk token **$1WIN** on-chain Solana Mainnet dengan Web Terminal port 6000 dan Cloudflare Tunnel domain `topnodtools.web.id`.
+Bot sniper presale & DEX resmi untuk token **$1WIN** on-chain Solana Mainnet dengan Web Terminal port 6000 dan domain `botmicin.web.id`.
 
 ### 📌 Detail Kontrak Resmi ($1WIN)
 - **Token Mint (CA)**: `FjPKUGnF5zBpdEv18gT8FJCtxh3MKrFkoeYekgYr1win`
 - **Network**: Solana Mainnet (SPL Token)
 - **Program ID**: `GWvQinGBRa7ZUzhXY23MrLjdsx3KfRGxH8yXURBwrz1R`
 - **Harga Presale**: $0.03 USDC | **Alokasi**: 130,000,000 $1WIN
-- **Web Terminal**: `https://topnodtools.web.id` (`http://<AUTO_LOCAL_IP>:6000`)
+- **Web Terminal / Mini App**: `https://botmicin.web.id` (`http://<AUTO_LOCAL_IP>:6000`)
 
 ---
 
@@ -18,7 +18,7 @@ Jalankan satu perintah berikut di terminal VPS:
 ```bash
 git clone https://github.com/Imammaulidy/snip1win.git && cd snip1win && bash start.sh
 ```
-> Otomatis memeriksa dependensi sistem, mengisolasi virtualenv, menjalankan PM2 Hub & Cloudflare Tunnel ke `https://topnodtools.web.id`, dan menampilkan Control Panel interaktif.
+> Otomatis memeriksa dependensi sistem, mengisolasi virtualenv, menjalankan PM2 Hub untuk `botmicin.web.id`, dan menampilkan Control Panel interaktif. Gunakan Menu `[8]` untuk konfigurasi otomatis Reverse Proxy Nginx & SSL Certbot.
 
 ### 📱 2. Termux (Android)
 ```bash
@@ -43,7 +43,7 @@ cd snip1win
 
 | Tombol / Fitur | Cara Kerja Instan |
 | :--- | :--- |
-| **📱 Telegram Mini App (TMA)** | Buka terminal trading langsung di dalam aplikasi Telegram tanpa browser luar. |
+| **📱 Telegram Mini App (TMA)** | Buka terminal trading langsung di dalam aplikasi Telegram tanpa browser luar (`https://botmicin.web.id`). |
 | **🛡️ Worker "Satpam" (Radar)** | Radar background 250ms memantau status presale & pool DEX on-chain Solana. |
 | **⚡ Worker "Buy" Zero-Latency** | Begitu status presale live, dieksekusi sub-milidetik tanpa delay. |
 | **🔴 Worker "Sell" 1-Klik** | Tombol instan Sell 25%, 50%, 100% via Jupiter Swap di Bot & Mini App. |

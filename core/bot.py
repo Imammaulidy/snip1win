@@ -90,7 +90,7 @@ def is_potential_base58_privkey(text: str) -> bool:
 def get_reply_keyboard() -> ReplyKeyboardMarkup:
     """Persistent bottom keyboard with In-App Telegram Mini App button."""
     keyboard = [
-        [KeyboardButton("📱 Buka $1WIN Mini App", web_app=WebAppInfo(url="https://topnodtools.web.id"))],
+        [KeyboardButton("📱 Buka $1WIN Mini App", web_app=WebAppInfo(url="https://botmicin.web.id"))],
         [KeyboardButton("⚡ Snipe Presale"), KeyboardButton("🚀 Snipe DEX")],
         [KeyboardButton("🔴 Jual $1WIN (Sell)"), KeyboardButton("💰 Saldo & Wallet")],
         [KeyboardButton("📊 Status Sale"), KeyboardButton("⚙️ Pengaturan Cepat")],
@@ -142,7 +142,7 @@ def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
 
     # Row 6: In-App Mini App Direct Launch Button
     rows.append([
-        InlineKeyboardButton("📱 Buka Mini App $1WIN (In-App)", web_app=WebAppInfo(url=f"https://topnodtools.web.id/?auth_id={user_id}"))
+        InlineKeyboardButton("📱 Buka Mini App $1WIN (In-App)", web_app=WebAppInfo(url=f"https://botmicin.web.id/?auth_id={user_id}"))
     ])
 
     return InlineKeyboardMarkup(rows)
@@ -277,7 +277,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🎯 **Target Token CA**: `{config.token_ca}`\n"
         f"🏛 **Sale Program ID**: `{config.sale_program_id}`\n"
         f"💵 **Harga Presale**: $0.03 USDC (SPL)\n"
-        f"🌐 **Web Interface**: `https://topnodtools.web.id`\n"
+        f"🌐 **Web Interface**: `https://botmicin.web.id`\n"
         f"⚙️ **Multi-Worker**: {'🟢 AKTIF (SATPAM & BUY SIAGA)' if sniper_engine.is_auto_running else '⚪ STANDBY'}\n\n"
         "💡 *Gunakan tombol menu di bawah atau tombol keyboard untuk interaksi cepat tanpa mengetik perintah.*"
     )
@@ -607,7 +607,7 @@ async def show_web_terminal_info(update: Update, context: ContextTypes.DEFAULT_T
     text = (
         "🌐 **1WIN SNIPER TELEGRAM MINI APP**\n\n"
         "Antarmuka Mini App terintegrasi langsung di dalam Telegram:\n"
-        "🔗 **Domain**: `https://topnodtools.web.id`\n\n"
+        "🔗 **Domain**: `https://botmicin.web.id`\n\n"
         "Keunggulan Telegram Mini App:\n"
         "✅ **Zero-Click In-App Launch**: Buka langsung di dalam Telegram tanpa keluar ke browser luar!\n"
         "✅ **Otomatis Terhubung**: Data wallet & saldo akun Anda langsung aktif seketika.\n"
@@ -615,7 +615,7 @@ async def show_web_terminal_info(update: Update, context: ContextTypes.DEFAULT_T
         "✅ **One-Click Sell Hub**: Jual token $1WIN 25% / 50% / 100% langsung di dalam aplikasi."
     )
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📱 Buka Mini App $1WIN (In-App)", web_app=WebAppInfo(url=f"https://topnodtools.web.id/?auth_id={user.id}"))],
+        [InlineKeyboardButton("📱 Buka Mini App $1WIN (In-App)", web_app=WebAppInfo(url=f"https://botmicin.web.id/?auth_id={user.id}"))],
         [InlineKeyboardButton("🔙 Menu Utama", callback_data="main_menu")]
     ])
     if update.callback_query:
@@ -631,7 +631,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Klik '🔑 Import Wallet' lalu cukup **PASTE** private key Anda (pesan langsung dihapus demi privasi).\n"
         "• Klik '🔴 Jual $1WIN (Sell)' untuk take profit instan (25%, 50%, 100%).\n"
         "• Klik '🟢 Start Multi-Worker' untuk mengaktifkan Satpam Radar & Buy Executor otomatis.\n\n"
-        "🌐 **Web Interface**: `https://topnodtools.web.id`"
+        "🌐 **Web Interface**: `https://botmicin.web.id`"
     )
     if update.callback_query:
         await update.callback_query.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
@@ -1076,7 +1076,7 @@ async def run_unified_hub():
     print("=" * 70)
     print("🚀 1WIN TOKEN SALE SNIPER HUB AKTIF & SINKRON")
     print(f"🌐 Backend Web Terminal: http://{local_ip}:{port}")
-    print(f"☁️ Cloudflare Ingress   : topnodtools.web.id -> http://{local_ip}:{port}")
+    print(f"🌐 Domain / Mini App   : https://botmicin.web.id -> http://{local_ip}:{port}")
     print(f"🤖 Telegram Bot         : @snip1winprimatabot")
     print("=" * 70)
 
@@ -1107,7 +1107,7 @@ async def run_unified_hub():
         # Set Telegram Menu Button to Mini App WebApp
         try:
             await tg_app.bot.set_chat_menu_button(
-                menu_button=MenuButtonWebApp(text="Sniper App", web_app=WebAppInfo(url="https://topnodtools.web.id"))
+                menu_button=MenuButtonWebApp(text="Sniper App", web_app=WebAppInfo(url="https://botmicin.web.id"))
             )
         except Exception as e:
             print(f"[MenuButtonWebApp Info] {e}")

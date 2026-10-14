@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ======================================================================
 #  1WIN TOKEN SALE SNIPER HUB - ALL-IN-ONE LAUNCHER & MENU (LINUX / TERMUX)
-#  Backend: Port 6000 (Auto Local IP) • Domain: https://topnodtools.web.id
+#  Backend: Port 6000 (Auto Local IP) • Domain: https://botmicin.web.id
 # ======================================================================
 
 # Non-interactive mode agar tidak memunculkan popup konfigurasi kernel/layar merah di VPS
@@ -21,9 +21,8 @@ fi
 if [ "$IS_TERMUX" = true ]; then
   command -v python >/dev/null 2>&1 || { echo "[*] Menginstal Python..."; pkg update -y && pkg install -y python; }
   command -v node >/dev/null 2>&1 || { echo "[*] Menginstal Node.js..."; pkg install -y nodejs; }
-  command -v cloudflared >/dev/null 2>&1 || { echo "[*] Menginstal Cloudflared..."; pkg install -y cloudflared; }
 else
-  # Linux VPS (Ubuntu/Debian) - Pastikan python3, pip, venv terpasang (bukan hanya python3)
+  # Linux VPS (Ubuntu/Debian) - Pastikan python3, pip, venv terpasang
   NEED_PKG=false
   if ! command -v python3 >/dev/null 2>&1 || ! command -v pip3 >/dev/null 2>&1 || ! python3 -c "import venv" >/dev/null 2>&1; then
     NEED_PKG=true
@@ -45,22 +44,6 @@ else
     elif command -v yum >/dev/null 2>&1; then
       sudo yum install -y nodejs npm || true
     fi
-  fi
-
-  if ! command -v cloudflared >/dev/null 2>&1 && [ ! -f "core/bin/cloudflared" ]; then
-    mkdir -p core/bin
-    ARCH="$(uname -m)"
-    echo "[*] Mengunduh binary Cloudflared ($ARCH)..."
-    if [ "$ARCH" = "x86_64" ]; then
-      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" -o core/bin/cloudflared || true
-      chmod +x core/bin/cloudflared 2>/dev/null || true
-    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-      curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" -o core/bin/cloudflared || true
-      chmod +x core/bin/cloudflared 2>/dev/null || true
-    fi
-  fi
-  if [ -f "core/bin/cloudflared" ]; then
-    chmod +x core/bin/cloudflared 2>/dev/null || true
   fi
 fi
 
@@ -128,25 +111,13 @@ if [ ! -f "core/.env" ]; then
   echo "PUBLIC_ACCESS=true" >> core/.env
 fi
 
-# 6. Jalankan PM2 (HANYA jalankan service 1win-sniper-hub & 1win-tunnel, dilarang menyentuh aplikasi lain)
-echo "[*] Menjalankan 1win-sniper-hub & 1win-tunnel via PM2..."
-pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-pkill -9 -f "topnodtools" 2>/dev/null || true
-pm2 delete 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
-pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || pm2 restart 1win-sniper-hub >/dev/null 2>&1 || true
-pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || pm2 restart 1win-tunnel >/dev/null 2>&1 || true
-pm2 save >/dev/null 2>&1 || true
-
-# Cek status token Cloudflare Tunnel
-CF_CHECK=""
-if [ -f "core/.env" ]; then
-  CF_CHECK=$(grep -E "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r\n')
-fi
-if [ -z "$CF_CHECK" ] && [ ! -f "$HOME/.cloudflared/58eb85db-cd18-45a5-ad97-b6b99ea9848f.json" ]; then
-  echo ""
-  echo "⚠️  Catatan: Cloudflare Tunnel Token belum dikonfigurasi di core/.env."
-  echo "    Gunakan Menu [7] -> [2] untuk memasukkan token Cloudflare jika ingin domain live."
-  sleep 2
+# 6. Jalankan PM2 (HANYA jalankan service 1win-sniper-hub, dilarang menyentuh aplikasi lain)
+echo "[*] Menjalankan 1win-sniper-hub via PM2..."
+pm2 delete 1win-tunnel >/dev/null 2>&1 || true
+pm2 describe 1win-sniper-hub >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
+  pm2 save >/dev/null 2>&1 || true
 fi
 
 # 7. Tampilkan Interface Menu Interaktif
@@ -160,126 +131,106 @@ while true; do
     echo "   Platform : Linux VPS / Server"
   fi
   echo "   Backend  : Port 6000 (Auto Local IP)"
-  echo "   Domain   : https://topnodtools.web.id"
+  echo "   Domain   : https://botmicin.web.id"
   echo "======================================================================"
   echo ""
-  echo "   [1] 📊 Lihat Status Proses (1win-sniper-hub & 1win-tunnel)"
-  echo "   [2] 📜 Lihat Live Logs Backend & Tunnel (Realtime Stream)"
-  echo "   [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)"
-  echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)"
-  echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)"
-  echo "   [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub & 1win-tunnel)"
-  echo "   [7] 🔑 Set / Ubah Token (Telegram Bot & Cloudflare Tunnel)"
+  echo "   [1] 📊 Lihat Status Proses (1win-sniper-hub)"
+  echo "   [2] 📜 Lihat Live Logs Backend (Realtime Stream)"
+  echo "   [3] 🔄 Restart Service (1win-sniper-hub)"
+  echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub)"
+  echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub)"
+  echo "   [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub)"
+  echo "   [7] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
+  echo "   [8] 🌐 Setup Reverse Proxy Nginx & SSL (botmicin.web.id)"
   echo "   [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)"
   echo ""
   echo "======================================================================"
-  read -r -p "Pilih menu [0-7]: " opt
+  read -r -p "Pilih menu [0-8]: " opt
 
   case "$opt" in
     1)
       clear
       echo "======================================================================"
-      echo "   📊 STATUS PROSES 1WIN SNIPER HUB & TUNNEL"
+      echo "   📊 STATUS PROSES 1WIN SNIPER HUB"
       echo "======================================================================"
       echo ""
-      pm2 status 1win-sniper-hub 1win-tunnel 2>/dev/null || pm2 status
+      pm2 status 1win-sniper-hub 2>/dev/null || pm2 status
       echo ""
       read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
     2)
       clear
       echo "======================================================================"
-      echo "   📜 LIVE LOGS BACKEND & TUNNEL (Tekan Ctrl+C untuk kembali ke menu)"
+      echo "   📜 LIVE LOGS BACKEND (Tekan Ctrl+C untuk kembali ke menu)"
       echo "======================================================================"
       echo ""
-      pm2 logs 1win-sniper-hub 1win-tunnel --lines 30
+      pm2 logs 1win-sniper-hub --lines 30
       echo ""
       read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
     3)
       clear
       echo "======================================================================"
-      echo "   🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
+      echo "   🔄 MERESTART 1WIN SNIPER HUB"
       echo "======================================================================"
       echo ""
-      echo "[*] Membersihkan proses tunnel lama..."
-      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-      pkill -9 -f "topnodtools" 2>/dev/null || true
-      sleep 1
       echo "[*] Merestart 1win-sniper-hub..."
       pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
-      echo "[*] Merestart 1win-tunnel..."
-      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!"
+      echo "[OK] Service 1win-sniper-hub berhasil direstart!"
       sleep 2
       ;;
     4)
       clear
       echo "======================================================================"
-      echo "   🛑 MENGHENTIKAN 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
+      echo "   🛑 MENGHENTIKAN 1WIN SNIPER HUB"
       echo "======================================================================"
       echo ""
       echo "[*] Menghentikan 1win-sniper-hub..."
       pm2 stop 1win-sniper-hub >/dev/null 2>&1 || true
-      echo "[*] Menghentikan 1win-tunnel..."
-      pm2 stop 1win-tunnel >/dev/null 2>&1 || true
-      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-      pkill -9 -f "topnodtools" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
+      echo "[OK] 1win-sniper-hub telah dihentikan (service lain tetap aman)."
       sleep 2
       ;;
     5)
       clear
       echo "======================================================================"
-      echo "   🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
+      echo "   🚀 MENJALANKAN ULANG 1WIN SNIPER HUB"
       echo "======================================================================"
       echo ""
-      echo "[*] Membersihkan proses tunnel lama..."
-      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-      pkill -9 -f "topnodtools" 2>/dev/null || true
-      sleep 1
       echo "[*] Memulai service 1win-sniper-hub..."
       pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
-      echo "[*] Memulai service 1win-tunnel..."
-      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!"
+      echo "[OK] 1win-sniper-hub berhasil dijalankan!"
       sleep 2
       ;;
     6)
       clear
       echo "======================================================================"
-      echo "   🗑️ HAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB & 1WIN-TUNNEL)"
+      echo "   🗑️ HAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB)"
       echo "======================================================================"
       echo ""
       echo "[*] Menghapus 1win-sniper-hub dari PM2..."
       pm2 delete 1win-sniper-hub >/dev/null 2>&1 || true
-      echo "[*] Menghapus 1win-tunnel dari PM2..."
       pm2 delete 1win-tunnel >/dev/null 2>&1 || true
-      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-      pkill -9 -f "topnodtools" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!"
+      echo "[OK] 1win-sniper-hub telah berhasil dihapus dari PM2!"
       echo "     (Service lain seperti depilQR & depilStellar tetap aman)."
       sleep 2
       ;;
     7)
       clear
       echo "======================================================================"
-      echo "   🔑 PENGATURAN KREDENSIAL / TOKEN (1WIN SNIPER)"
+      echo "   🔑 SET / UBAH TOKEN BOT TELEGRAM"
       echo "======================================================================"
       echo ""
       CUR_TG_TOKEN=""
-      CUR_CF_TOKEN=""
       if [ -f "core/.env" ]; then
         CUR_TG_TOKEN=$(grep -E "^TELEGRAM_BOT_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
-        CUR_CF_TOKEN=$(grep -E "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
       fi
       if [ -z "$CUR_TG_TOKEN" ] && [ -f "core/config.json" ]; then
         CUR_TG_TOKEN=$(grep -o '"telegram_bot_token": *"[^"]*"' core/config.json | cut -d'"' -f4)
@@ -288,47 +239,28 @@ while true; do
       if [ -n "$CUR_TG_TOKEN" ] && [ "$CUR_TG_TOKEN" != "YOUR_TELEGRAM_BOT_TOKEN_FROM_BOTFATHER" ]; then
         TOKEN_LEN=${#CUR_TG_TOKEN}
         if [ "$TOKEN_LEN" -gt 15 ]; then
-          echo "1. Token Telegram Bot : ${CUR_TG_TOKEN:0:8}********${CUR_TG_TOKEN: -6}"
+          echo "Token saat ini : ${CUR_TG_TOKEN:0:8}********${CUR_TG_TOKEN: -6}"
         else
-          echo "1. Token Telegram Bot : Terpasang"
+          echo "Token saat ini : Terpasang"
         fi
       else
-        echo "1. Token Telegram Bot : (Belum diatur)"
-      fi
-
-      if [ -n "$CUR_CF_TOKEN" ]; then
-        CF_LEN=${#CUR_CF_TOKEN}
-        if [ "$CF_LEN" -gt 15 ]; then
-          echo "2. Token Cloudflare   : ${CUR_CF_TOKEN:0:8}********${CUR_CF_TOKEN: -6}"
-        else
-          echo "2. Token Cloudflare   : Terpasang"
-        fi
-      else
-        echo "2. Token Cloudflare   : (Belum diatur - dibutuhkan untuk domain topnodtools.web.id)"
+        echo "Token saat ini : (Belum diatur / Masih default template)"
       fi
 
       echo ""
-      echo "   [1] Ubah Token Telegram Bot"
-      echo "   [2] Ubah Token Cloudflare Tunnel (topnodtools)"
-      echo "   [0] Kembali ke Menu Utama"
-      echo ""
-      read -r -p "Pilih opsi [0-2]: " t_opt
+      read -r -p "Paste Token Telegram Bot Anda (dari @BotFather): " NEW_TG
+      NEW_TG=$(echo "$NEW_TG" | tr -d ' \r\n"')
 
-      case "$t_opt" in
-        1)
-          echo ""
-          read -r -p "Paste Token Telegram Bot (dari @BotFather): " NEW_TG
-          NEW_TG=$(echo "$NEW_TG" | tr -d ' \r\n"')
-          if [ -n "$NEW_TG" ]; then
-            touch core/.env
-            if grep -q "^TELEGRAM_BOT_TOKEN=" core/.env; then
-              sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${NEW_TG}|" core/.env
-            else
-              echo "TELEGRAM_BOT_TOKEN=${NEW_TG}" >> core/.env
-            fi
+      if [ -n "$NEW_TG" ]; then
+        touch core/.env
+        if grep -q "^TELEGRAM_BOT_TOKEN=" core/.env; then
+          sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${NEW_TG}|" core/.env
+        else
+          echo "TELEGRAM_BOT_TOKEN=${NEW_TG}" >> core/.env
+        fi
 
-            if [ -f "core/config.json" ]; then
-              $PYTHON_EXEC -c "
+        if [ -f "core/config.json" ]; then
+          $PYTHON_EXEC -c "
 import json, pathlib
 p = pathlib.Path('core/config.json')
 try:
@@ -338,60 +270,93 @@ except:
 d['telegram_bot_token'] = '''${NEW_TG}'''
 p.write_text(json.dumps(d, indent=2), encoding='utf-8')
 " 2>/dev/null || true
-            fi
+        fi
 
-            echo ""
-            echo "[*] Merestart 1win-sniper-hub dengan token baru..."
-            pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
-            pm2 save >/dev/null 2>&1 || true
-            echo ""
-            echo "[OK] Token Telegram Bot berhasil disimpan!"
-          else
-            echo ""
-            echo "[!] Input kosong. Token tidak diubah."
-          fi
-          sleep 2
-          ;;
-        2)
-          echo ""
-          read -r -p "Paste Token Cloudflare Tunnel (base64 token): " NEW_CF
-          NEW_CF=$(echo "$NEW_CF" | tr -d ' \r\n"')
-          if [ -n "$NEW_CF" ]; then
-            touch core/.env
-            if grep -q "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env; then
-              sed -i "s|^CLOUDFLARE_TUNNEL_TOKEN=.*|CLOUDFLARE_TUNNEL_TOKEN=${NEW_CF}|" core/.env
-            else
-              echo "CLOUDFLARE_TUNNEL_TOKEN=${NEW_CF}" >> core/.env
-            fi
+        echo ""
+        echo "[*] Merestart 1win-sniper-hub dengan token baru..."
+        pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
+        pm2 save >/dev/null 2>&1 || true
+        echo ""
+        echo "[OK] Token Telegram Bot berhasil disimpan dan 1win-sniper-hub telah aktif!"
+      else
+        echo ""
+        echo "[!] Input kosong. Token tidak diubah."
+      fi
+      sleep 2
+      ;;
+    8)
+      clear
+      echo "======================================================================"
+      echo "   🌐 SETUP REVERSE PROXY NGINX & SSL (botmicin.web.id)"
+      echo "======================================================================"
+      echo ""
+      echo "Menu ini akan mengonfigurasi Nginx di VPS untuk merutekan:"
+      echo "https://botmicin.web.id -> http://127.0.0.1:6000"
+      echo ""
+      read -r -p "Lanjutkan konfigurasi otomatis Nginx? (y/n): " confirm_nginx
+      if [[ "$confirm_nginx" =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "[1/4] Memeriksa & menginstal Nginx serta Certbot..."
+        if command -v apt-get >/dev/null 2>&1; then
+          sudo apt-get update -y && sudo apt-get install -y nginx certbot python3-certbot-nginx || true
+        elif command -v yum >/dev/null 2>&1; then
+          sudo yum install -y epel-release && sudo yum install -y nginx certbot python3-certbot-nginx || true
+        fi
 
-            echo ""
-            echo "[*] Merestart 1win-tunnel dengan token Cloudflare baru..."
-            pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-            pkill -9 -f "topnodtools" 2>/dev/null || true
-            pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
-            pm2 save >/dev/null 2>&1 || true
-            echo ""
-            echo "[OK] Token Cloudflare Tunnel berhasil disimpan dan 1win-tunnel aktif!"
-          else
-            echo ""
-            echo "[!] Input kosong. Token tidak diubah."
-          fi
-          sleep 2
-          ;;
-        *)
-          ;;
-      esac
+        echo "[2/4] Membuat konfigurasi Nginx untuk botmicin.web.id..."
+        NGINX_CONF="/etc/nginx/sites-available/botmicin"
+        if [ ! -d "/etc/nginx/sites-available" ]; then
+          NGINX_CONF="/etc/nginx/conf.d/botmicin.conf"
+        fi
+
+        sudo bash -c "cat > '$NGINX_CONF' << 'EOF'
+server {
+    listen 80;
+    server_name botmicin.web.id www.botmicin.web.id;
+
+    location / {
+        proxy_pass http://127.0.0.1:6000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \"upgrade\";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOF"
+
+        if [ -d "/etc/nginx/sites-enabled" ]; then
+          sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/botmicin
+        fi
+
+        echo "[3/4] Menguji & me-reload Nginx..."
+        sudo nginx -t && sudo systemctl reload nginx || sudo service nginx reload || true
+
+        echo "[4/4] Menerbitkan sertifikat SSL gratis (Let's Encrypt Certbot)..."
+        echo "Pastikan DNS A record botmicin.web.id sudah mengarah ke IP VPS ini!"
+        sudo certbot --nginx -d botmicin.web.id --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
+
+        echo ""
+        echo "[OK] Setup Reverse Proxy Nginx & SSL selesai!"
+        echo "     Web Terminal dapat diakses di: https://botmicin.web.id"
+      else
+        echo "[*] Dibatalkan."
+      fi
+      echo ""
+      read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
     0)
       clear
       echo "======================================================================"
       echo "   Service PM2 tetap aktif di background."
-      echo "   Domain Live: https://topnodtools.web.id"
+      echo "   Domain Live: https://botmicin.web.id"
       echo "======================================================================"
       exit 0
       ;;
     *)
-      echo "[!] Pilihan tidak valid. Silakan pilih 0-7."
+      echo "[!] Pilihan tidak valid. Silakan pilih 0-8."
       sleep 2
       ;;
   esac

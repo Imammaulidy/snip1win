@@ -23,11 +23,11 @@ if not exist "core\config.json" (
 )
 
 :: 4. Jalankan Service All-in-One via PM2 Otomatis Saat Launching
+call pm2 delete 1win-tunnel >nul 2>&1
 call pm2 describe 1win-sniper-hub >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Menyalakan 1win-sniper-hub dan 1win-tunnel via PM2...
+    echo [*] Menyalakan 1win-sniper-hub via PM2...
     call pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
-    call pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
     call pm2 save >nul 2>&1
 )
 
@@ -37,16 +37,16 @@ echo ======================================================================
 echo    🪙 1WIN TOKEN SALE SNIPER HUB (ALL-IN-ONE CONTROL PANEL)
 echo    Platform : Windows
 echo    Backend  : Port 6000 (Auto Local IP)
-echo    Domain   : https://topnodtools.web.id
+echo    Domain   : https://botmicin.web.id
 echo ======================================================================
-echo    [1] 📊 Lihat Status Proses (1win-sniper-hub dan 1win-tunnel)
+echo    [1] 📊 Lihat Status Proses (1win-sniper-hub)
 echo    [2] 📜 Lihat Live Logs Backend (Realtime Stream)
-echo    [3] 🔄 Restart Service (1win-sniper-hub dan 1win-tunnel)
-echo    [4] 🛑 Hentikan Service (Stop 1win-sniper-hub dan 1win-tunnel)
-echo    [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub dan 1win-tunnel)
-echo    [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub dan 1win-tunnel)
-echo    [7] 🔑 Set / Ubah Token (Telegram Bot & Cloudflare Tunnel)
-echo    [8] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
+echo    [3] 🔄 Restart Service (1win-sniper-hub)
+echo    [4] 🛑 Hentikan Service (Stop 1win-sniper-hub)
+echo    [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub)
+echo    [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub)
+echo    [7] 🔑 Set / Ubah Token Telegram Bot (Paste Token Langsung)
+echo    [8] 🌐 Buka Web Terminal di Browser (botmicin.web.id)
 echo    [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)
 echo.
 echo ======================================================================
@@ -70,10 +70,10 @@ goto MENU
 :STATUS
 cls
 echo ======================================================================
-echo    📊 STATUS RUNNING PM2 PROCESSES (1WIN HUB DAN TUNNEL)
+echo    📊 STATUS RUNNING PM2 PROCESS (1WIN SNIPER HUB)
 echo ======================================================================
 echo.
-call pm2 status 1win-sniper-hub 1win-tunnel
+call pm2 status 1win-sniper-hub
 echo.
 echo Tekan sembarang tombol untuk kembali ke menu...
 pause >nul
@@ -85,7 +85,7 @@ echo ======================================================================
 echo    📜 LIVE LOGS BACKEND (Tekan Ctrl+C untuk kembali ke menu)
 echo ======================================================================
 echo.
-call pm2 logs 1win-sniper-hub 1win-tunnel --lines 30
+call pm2 logs 1win-sniper-hub --lines 30
 echo.
 echo Tekan sembarang tombol untuk kembali ke menu...
 pause >nul
@@ -94,7 +94,7 @@ goto MENU
 :RESTART
 cls
 echo ======================================================================
-echo    🔄 MERESTART 1WIN SNIPER HUB DAN CLOUDFLARE TUNNEL
+echo    🔄 MERESTART 1WIN SNIPER HUB
 echo ======================================================================
 echo.
 echo [*] Merestart 1win-sniper-hub...
@@ -102,14 +102,9 @@ call pm2 restart 1win-sniper-hub >nul 2>&1
 if %errorlevel% neq 0 (
     call pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
 )
-echo [*] Merestart 1win-tunnel...
-call pm2 restart 1win-tunnel >nul 2>&1
-if %errorlevel% neq 0 (
-    call pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
-)
 call pm2 save >nul 2>&1
 echo.
-echo [OK] Service 1win-sniper-hub dan 1win-tunnel berhasil direstart!
+echo [OK] Service 1win-sniper-hub berhasil direstart!
 echo.
 ping 127.0.0.1 -n 3 >nul
 goto MENU
@@ -117,16 +112,14 @@ goto MENU
 :STOP
 cls
 echo ======================================================================
-echo    🛑 MENGHENTIKAN 1WIN SNIPER HUB DAN CLOUDFLARE TUNNEL
+echo    🛑 MENGHENTIKAN 1WIN SNIPER HUB
 echo ======================================================================
 echo.
 echo [*] Menghentikan 1win-sniper-hub...
 call pm2 stop 1win-sniper-hub >nul 2>&1
-echo [*] Menghentikan 1win-tunnel...
-call pm2 stop 1win-tunnel >nul 2>&1
 call pm2 save >nul 2>&1
 echo.
-echo [OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman).
+echo [OK] 1win-sniper-hub telah dihentikan (service lain tetap aman).
 echo.
 ping 127.0.0.1 -n 3 >nul
 goto MENU
@@ -134,7 +127,7 @@ goto MENU
 :START
 cls
 echo ======================================================================
-echo    🚀 MENJALANKAN ULANG 1WIN SNIPER HUB DAN CLOUDFLARE TUNNEL
+echo    🚀 MENJALANKAN ULANG 1WIN SNIPER HUB
 echo ======================================================================
 echo.
 echo [*] Memulai 1win-sniper-hub...
@@ -144,16 +137,9 @@ if %errorlevel% equ 0 (
 ) else (
     call pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
 )
-echo [*] Memulai 1win-tunnel...
-call pm2 describe 1win-tunnel >nul 2>&1
-if %errorlevel% equ 0 (
-    call pm2 restart 1win-tunnel >nul 2>&1
-) else (
-    call pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
-)
 call pm2 save >nul 2>&1
 echo.
-echo [OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!
+echo [OK] 1win-sniper-hub berhasil dijalankan!
 echo.
 ping 127.0.0.1 -n 3 >nul
 goto MENU
@@ -161,16 +147,15 @@ goto MENU
 :DELETE
 cls
 echo ======================================================================
-echo    🗑️ MENGHAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB DAN 1WIN-TUNNEL)
+echo    🗑️ MENGHAPUS SERVICE DARI PM2 (DELETE 1WIN-HUB)
 echo ======================================================================
 echo.
 echo [*] Menghapus 1win-sniper-hub dari PM2...
 call pm2 delete 1win-sniper-hub >nul 2>&1
-echo [*] Menghapus 1win-tunnel dari PM2...
 call pm2 delete 1win-tunnel >nul 2>&1
 call pm2 save >nul 2>&1
 echo.
-echo [OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!
+echo [OK] 1win-sniper-hub telah berhasil dihapus dari PM2!
 echo.
 ping 127.0.0.1 -n 3 >nul
 goto MENU
@@ -178,21 +163,8 @@ goto MENU
 :SET_TOKEN
 cls
 echo ======================================================================
-echo    🔑 PENGATURAN KREDENSIAL / TOKEN (1WIN SNIPER)
+echo    🔑 SET / UBAH TOKEN BOT TELEGRAM
 echo ======================================================================
-echo.
-echo    [1] Ubah Token Telegram Bot
-echo    [2] Ubah Token Cloudflare Tunnel (topnodtools)
-echo    [0] Kembali ke Menu Utama
-echo.
-set "t_opt="
-set /p t_opt="Pilih opsi [0-2]: "
-if "%t_opt%"=="1" goto SET_TG_TOKEN
-if "%t_opt%"=="2" goto SET_CF_TOKEN
-if "%t_opt%"=="0" goto MENU
-goto MENU
-
-:SET_TG_TOKEN
 echo.
 set "NEW_TOKEN="
 set /p "NEW_TOKEN=Paste Token Telegram Bot Anda (dari @BotFather): "
@@ -209,32 +181,15 @@ echo [OK] Token Telegram Bot berhasil disimpan!
 ping 127.0.0.1 -n 3 >nul
 goto MENU
 
-:SET_CF_TOKEN
-echo.
-set "NEW_CF="
-set /p "NEW_CF=Paste Token Cloudflare Tunnel (base64 token): "
-if "%NEW_CF%"=="" (
-    echo [!] Input kosong. Token tidak diubah.
-    ping 127.0.0.1 -n 3 >nul
-    goto MENU
-)
-"%PYTHON_EXE%" -c "import sys, pathlib; t=sys.argv[1].strip(); ep=pathlib.Path('core/.env'); lines=[l for l in (ep.read_text('utf-8').splitlines() if ep.exists() else []) if not l.startswith('CLOUDFLARE_TUNNEL_TOKEN=')]; lines.append('CLOUDFLARE_TUNNEL_TOKEN=' + t); ep.write_text('\n'.join(lines) + '\n', encoding='utf-8')" "%NEW_CF%" >nul 2>&1
-echo [*] Merestart 1win-tunnel dengan token baru...
-call pm2 restart 1win-tunnel >nul 2>&1
-call pm2 save >nul 2>&1
-echo [OK] Token Cloudflare Tunnel berhasil disimpan!
-ping 127.0.0.1 -n 3 >nul
-goto MENU
-
 :OPEN_WEB
-start https://topnodtools.web.id
+start https://botmicin.web.id
 goto MENU
 
 :EXIT
 cls
 echo ======================================================================
 echo    Service PM2 tetap berjalan aktif di background.
-echo    Domain Live: https://topnodtools.web.id
+echo    Domain Live: https://botmicin.web.id
 echo ======================================================================
 ping 127.0.0.1 -n 3 >nul
 exit /b 0

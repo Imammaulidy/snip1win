@@ -1,7 +1,5 @@
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
-
 
 const rootDir = path.resolve(__dirname, '..');
 const isWin = process.platform === 'win32';
@@ -33,24 +31,7 @@ function loadEnv() {
 }
 loadEnv();
 
-// Deteksi IP Lokal LAN aktif secara otomatis
-function getLocalIp() {
-  try {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-  } catch (e) {}
-  return '127.0.0.1';
-}
-
-const localIp = getLocalIp();
-
-// Deteksi Python interpreter yang valid secara dinamis
+// 2. Deteksi Python interpreter yang valid secara dinamis
 let pythonPath = isWin ? 'python' : 'python3';
 if (isWin) {
   const venvPythonw = path.resolve(rootDir, '.venv', 'Scripts', 'pythonw.exe');
@@ -70,33 +51,6 @@ if (isWin) {
   }
 }
 
-// Deteksi binary cloudflared secara dinamis
-let cloudflaredPath = 'cloudflared';
-const winBin = path.resolve(__dirname, 'bin', 'cloudflared.exe');
-const projectWinBin = path.resolve(rootDir, 'core', 'bin', 'cloudflared.exe');
-const linuxBin = path.resolve(__dirname, 'bin', 'cloudflared');
-const projectLinuxBin = path.resolve(rootDir, 'core', 'bin', 'cloudflared');
-const termuxBin = '/data/data/com.termux/files/usr/bin/cloudflared';
-const usrLocalBin = '/usr/local/bin/cloudflared';
-
-if (isWin) {
-  if (fs.existsSync(winBin)) cloudflaredPath = winBin;
-  else if (fs.existsSync(projectWinBin)) cloudflaredPath = projectWinBin;
-} else {
-  if (fs.existsSync(linuxBin)) cloudflaredPath = linuxBin;
-  else if (fs.existsSync(projectLinuxBin)) cloudflaredPath = projectLinuxBin;
-  else if (fs.existsSync(termuxBin)) cloudflaredPath = termuxBin;
-  else if (fs.existsSync(usrLocalBin)) cloudflaredPath = usrLocalBin;
-}
-
-// Argumen tunnel untuk domain topnodtools.web.id menuju ke port 6000
-let tunnelArgs = ['tunnel', 'run', '--url', `http://${localIp}:6000`, 'topnodtools'];
-if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
-  tunnelArgs = ['tunnel', 'run', '--token', process.env.CLOUDFLARE_TUNNEL_TOKEN];
-} else if (process.env.CLOUDFLARE_TUNNEL_NAME) {
-  tunnelArgs = ['tunnel', 'run', '--url', `http://${localIp}:6000`, process.env.CLOUDFLARE_TUNNEL_NAME];
-}
-
 module.exports = {
   apps: [
     {
@@ -112,21 +66,6 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: '1',
         PYTHONIOENCODING: 'utf-8',
-        PYTHONPATH: rootDir
-      }
-    },
-    {
-      name: '1win-tunnel',
-      script: 'core/tunnel_runner.py',
-      cwd: rootDir,
-      interpreter: pythonPath,
-      windowsHide: true,
-      autorestart: true,
-      watch: false,
-      restart_delay: 3000,
-      min_uptime: '5s',
-      env: {
-        PYTHONUNBUFFERED: '1',
         PYTHONPATH: rootDir
       }
     }
