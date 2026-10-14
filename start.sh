@@ -147,24 +147,25 @@ while true; do
   echo "   Domain   : https://topnodtools.web.id"
   echo "======================================================================"
   echo ""
-  echo "   [1] 📊 Lihat Status Proses PM2"
+  echo "   [1] 📊 Lihat Status Proses (1win-sniper-hub & 1win-tunnel)"
   echo "   [2] 📜 Lihat Live Logs Backend (Realtime Stream)"
-  echo "   [3] 🔄 Restart Semua Service (Hub + Cloudflare Tunnel)"
-  echo "   [4] 🛑 Hentikan Semua Service (Stop PM2)"
-  echo "   [5] 🚀 Jalankan Ulang Service (Start PM2)"
+  echo "   [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)"
+  echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)"
+  echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)"
+  echo "   [6] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
   echo "   [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)"
   echo ""
   echo "======================================================================"
-  read -r -p "Pilih menu [0-5]: " opt
+  read -r -p "Pilih menu [0-6]: " opt
 
   case "$opt" in
     1)
       clear
       echo "======================================================================"
-      echo "   📊 STATUS RUNNING PM2 PROCESSES"
+      echo "   📊 STATUS PROSES 1WIN SNIPER HUB & TUNNEL"
       echo "======================================================================"
       echo ""
-      pm2 status
+      pm2 status 1win-sniper-hub 1win-tunnel 2>/dev/null || pm2 status
       echo ""
       read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
@@ -184,36 +185,102 @@ while true; do
       echo "   🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
+      echo "[*] Hanya merestart service 1win-sniper-hub & 1win-tunnel..."
       pm2 restart 1win-sniper-hub 1win-tunnel
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] Service berhasil direstart!"
+      echo "[OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!"
       sleep 2
       ;;
     4)
       clear
       echo "======================================================================"
-      echo "   🛑 MENGHENTIKAN SEMUA SERVICE"
+      echo "   🛑 MENGHENTIKAN 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
+      echo "[*] Hanya menghentikan service 1win-sniper-hub & 1win-tunnel..."
       pm2 stop 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
-      pm2 delete 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
-      echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan."
+      echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
       sleep 2
       ;;
     5)
       clear
       echo "======================================================================"
-      echo "   🚀 MENJALANKAN SERVICE (PM2)"
+      echo "   🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      pm2 start core/ecosystem.config.js
+      echo "[*] Menjalankan kembali service 1win-sniper-hub & 1win-tunnel..."
+      pm2 start 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!"
       sleep 2
+      ;;
+    6)
+      clear
+      echo "======================================================================"
+      echo "   🔑 SET / UBAH TOKEN BOT TELEGRAM"
+      echo "======================================================================"
+      echo ""
+      CURRENT_TOKEN=""
+      if [ -f "core/.env" ]; then
+        CURRENT_TOKEN=$(grep -E "^TELEGRAM_BOT_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
+      fi
+      if [ -z "$CURRENT_TOKEN" ] && [ -f "core/config.json" ]; then
+        CURRENT_TOKEN=$(grep -o '"telegram_bot_token": *"[^"]*"' core/config.json | cut -d'"' -f4)
+      fi
+
+      if [ -n "$CURRENT_TOKEN" ] && [ "$CURRENT_TOKEN" != "YOUR_TELEGRAM_BOT_TOKEN_FROM_BOTFATHER" ]; then
+        TOKEN_LEN=${#CURRENT_TOKEN}
+        if [ "$TOKEN_LEN" -gt 15 ]; then
+          PREFIX_T="${CURRENT_TOKEN:0:8}"
+          SUFFIX_T="${CURRENT_TOKEN: -6}"
+          echo "Token saat ini : ${PREFIX_T}********${SUFFIX_T}"
+        else
+          echo "Token saat ini : Terpasang"
+        fi
+      else
+        echo "Token saat ini : (Belum diatur / Masih default template)"
+      fi
+      echo ""
+      read -r -p "Paste Token Telegram Bot Anda (dari @BotFather): " NEW_TOKEN
+      NEW_TOKEN=$(echo "$NEW_TOKEN" | tr -d ' \r\n"')
+
+      if [ -n "$NEW_TOKEN" ]; then
+        touch core/.env
+        if grep -q "^TELEGRAM_BOT_TOKEN=" core/.env; then
+          sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${NEW_TOKEN}|" core/.env
+        else
+          echo "TELEGRAM_BOT_TOKEN=${NEW_TOKEN}" >> core/.env
+        fi
+
+        if [ -f "core/config.json" ]; then
+          $PYTHON_EXEC -c "
+import json, pathlib
+p = pathlib.Path('core/config.json')
+try:
+    d = json.loads(p.read_text(encoding='utf-8'))
+except:
+    d = {}
+d['telegram_bot_token'] = '''${NEW_TOKEN}'''
+p.write_text(json.dumps(d, indent=2), encoding='utf-8')
+" 2>/dev/null || true
+        fi
+
+        echo ""
+        echo "[*] Merestart 1win-sniper-hub dengan token baru..."
+        pm2 restart 1win-sniper-hub >/dev/null 2>&1 || true
+        pm2 save >/dev/null 2>&1 || true
+        echo ""
+        echo "[OK] Token Telegram Bot berhasil disimpan dan 1win-sniper-hub telah aktif!"
+      else
+        echo ""
+        echo "[!] Input kosong. Token tidak diubah."
+      fi
+      echo ""
+      read -r -p "Tekan Enter untuk kembali ke menu..." dummy
       ;;
     0)
       clear
@@ -224,7 +291,7 @@ while true; do
       exit 0
       ;;
     *)
-      echo "[!] Pilihan tidak valid. Silakan pilih 0-5."
+      echo "[!] Pilihan tidak valid. Silakan pilih 0-6."
       sleep 2
       ;;
   esac

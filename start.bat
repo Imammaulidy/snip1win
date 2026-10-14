@@ -38,36 +38,38 @@ echo    Backend  : Port 6000 (Auto Local IP)
 echo    Domain   : https://topnodtools.web.id
 echo ======================================================================
 echo.
-echo    [1] 📊 Lihat Status Proses PM2
+echo    [1] 📊 Lihat Status Proses (1win-sniper-hub & 1win-tunnel)
 echo    [2] 📜 Lihat Live Logs Backend (Realtime Stream)
-echo    [3] 🔄 Restart Semua Service (Hub + Cloudflare Tunnel)
-echo    [4] 🛑 Hentikan Semua Service (Stop PM2)
-echo    [5] 🚀 Jalankan Ulang Service (Start PM2)
-echo    [6] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
+echo    [3] 🔄 Restart Service (1win-sniper-hub & 1win-tunnel)
+echo    [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)
+echo    [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)
+echo    [6] 🔑 Set / Ubah Token Telegram Bot (Paste Token Langsung)
+echo    [7] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
 echo    [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)
 echo.
 echo ======================================================================
-set /p opt="Pilih menu [0-6]: "
+set /p opt="Pilih menu [0-7]: "
 
 if "%opt%"=="1" goto STATUS
 if "%opt%"=="2" goto LOGS
 if "%opt%"=="3" goto RESTART
 if "%opt%"=="4" goto STOP
 if "%opt%"=="5" goto START
-if "%opt%"=="6" goto OPEN_WEB
+if "%opt%"=="6" goto SET_TOKEN
+if "%opt%"=="7" goto OPEN_WEB
 if "%opt%"=="0" goto EXIT
 
-echo [!] Pilihan tidak valid. Silakan pilih 0-6.
+echo [!] Pilihan tidak valid. Silakan pilih 0-7.
 timeout /t 2 >nul
 goto MENU
 
 :STATUS
 cls
 echo ======================================================================
-echo    📊 STATUS RUNNING PM2 PROCESSES
+echo    📊 STATUS RUNNING PM2 PROCESSES (1WIN HUB & TUNNEL)
 echo ======================================================================
 echo.
-pm2 status
+pm2 status 1win-sniper-hub 1win-tunnel
 echo.
 echo Tekan sembarang tombol untuk kembali ke menu...
 pause >nul
@@ -91,10 +93,11 @@ echo ======================================================================
 echo    🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
+echo [*] Hanya merestart service 1win-sniper-hub & 1win-tunnel...
 pm2 restart 1win-sniper-hub 1win-tunnel
 pm2 save >nul 2>&1
 echo.
-echo [OK] Service berhasil direstart!
+echo [OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!
 echo.
 timeout /t 2 >nul
 goto MENU
@@ -102,14 +105,14 @@ goto MENU
 :STOP
 cls
 echo ======================================================================
-echo    🛑 MENGHENTIKAN SEMUA SERVICE
+echo    🛑 MENGHENTIKAN 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
+echo [*] Hanya menghentikan service 1win-sniper-hub & 1win-tunnel...
 pm2 stop 1win-sniper-hub 1win-tunnel
-pm2 delete 1win-sniper-hub 1win-tunnel
 pm2 save >nul 2>&1
 echo.
-echo [OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan dan dibersihkan.
+echo [OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman).
 echo.
 timeout /t 2 >nul
 goto MENU
@@ -117,13 +120,41 @@ goto MENU
 :START
 cls
 echo ======================================================================
-echo    🚀 MENJALANKAN SERVICE (PM2)
+echo    🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
-pm2 start core/ecosystem.config.js
+echo [*] Menjalankan kembali service 1win-sniper-hub & 1win-tunnel...
+pm2 start 1win-sniper-hub 1win-tunnel >nul 2>&1 || pm2 start core/ecosystem.config.js
 pm2 save >nul 2>&1
 echo.
 echo [OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!
+echo.
+timeout /t 2 >nul
+goto MENU
+
+:SET_TOKEN
+cls
+echo ======================================================================
+echo    🔑 SET / UBAH TOKEN BOT TELEGRAM
+echo ======================================================================
+echo.
+set "NEW_TOKEN="
+set /p "NEW_TOKEN=Paste Token Telegram Bot Anda (dari @BotFather): "
+if "%NEW_TOKEN%"=="" (
+    echo.
+    echo [!] Input kosong. Token tidak diubah.
+    timeout /t 2 >nul
+    goto MENU
+)
+
+%PYTHON_EXE% -c "import json, pathlib; env_path=pathlib.Path('core/.env'); lines=[l for l in (env_path.read_text(encoding='utf-8').splitlines() if env_path.exists() else []) if not l.startswith('TELEGRAM_BOT_TOKEN=')]; lines.append('TELEGRAM_BOT_TOKEN=' + '''%NEW_TOKEN%'''.strip()); env_path.write_text('\n'.join(lines) + '\n', encoding='utf-8'); cfg_path=pathlib.Path('core/config.json'); data=json.loads(cfg_path.read_text(encoding='utf-8')) if cfg_path.exists() else {}; data['telegram_bot_token']='''%NEW_TOKEN%'''.strip(); cfg_path.write_text(json.dumps(data, indent=2), encoding='utf-8')" >nul 2>&1
+
+echo.
+echo [*] Merestart 1win-sniper-hub dengan token baru...
+pm2 restart 1win-sniper-hub >nul 2>&1
+pm2 save >nul 2>&1
+echo.
+echo [OK] Token Telegram Bot berhasil disimpan dan 1win-sniper-hub telah aktif!
 echo.
 timeout /t 2 >nul
 goto MENU
