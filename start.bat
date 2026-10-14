@@ -26,7 +26,8 @@ if not exist "core\config.json" (
 call pm2 describe 1win-sniper-hub >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Menyalakan 1win-sniper-hub dan 1win-tunnel via PM2...
-    call pm2 start core/ecosystem.config.js >nul 2>&1
+    call pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
+    call pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
     call pm2 save >nul 2>&1
 )
 
@@ -44,7 +45,7 @@ echo    [3] 🔄 Restart Service (1win-sniper-hub dan 1win-tunnel)
 echo    [4] 🛑 Hentikan Service (Stop 1win-sniper-hub dan 1win-tunnel)
 echo    [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub dan 1win-tunnel)
 echo    [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub dan 1win-tunnel)
-echo    [7] 🔑 Set / Ubah Token Telegram Bot (Paste Token Langsung)
+echo    [7] 🔑 Set / Ubah Token (Telegram Bot & Cloudflare Tunnel)
 echo    [8] 🌐 Buka Web Terminal di Browser (topnodtools.web.id)
 echo    [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)
 echo.
@@ -177,29 +178,52 @@ goto MENU
 :SET_TOKEN
 cls
 echo ======================================================================
-echo    🔑 SET / UBAH TOKEN BOT TELEGRAM
+echo    🔑 PENGATURAN KREDENSIAL / TOKEN (1WIN SNIPER)
 echo ======================================================================
+echo.
+echo    [1] Ubah Token Telegram Bot
+echo    [2] Ubah Token Cloudflare Tunnel (topnodtools)
+echo    [0] Kembali ke Menu Utama
+echo.
+set "t_opt="
+set /p t_opt="Pilih opsi [0-2]: "
+if "%t_opt%"=="1" goto SET_TG_TOKEN
+if "%t_opt%"=="2" goto SET_CF_TOKEN
+if "%t_opt%"=="0" goto MENU
+goto MENU
+
+:SET_TG_TOKEN
 echo.
 set "NEW_TOKEN="
 set /p "NEW_TOKEN=Paste Token Telegram Bot Anda (dari @BotFather): "
 if "%NEW_TOKEN%"=="" (
-    echo.
     echo [!] Input kosong. Token tidak diubah.
     ping 127.0.0.1 -n 3 >nul
     goto MENU
 )
-
 "%PYTHON_EXE%" -c "import sys, json, pathlib; t=sys.argv[1].strip(); ep=pathlib.Path('core/.env'); lines=[l for l in (ep.read_text('utf-8').splitlines() if ep.exists() else []) if not l.startswith('TELEGRAM_BOT_TOKEN=')]; lines.append('TELEGRAM_BOT_TOKEN=' + t); ep.write_text('\n'.join(lines) + '\n', encoding='utf-8'); cp=pathlib.Path('core/config.json'); d=json.loads(cp.read_text('utf-8')) if cp.exists() else {}; d['telegram_bot_token']=t; cp.write_text(json.dumps(d, indent=2), encoding='utf-8')" "%NEW_TOKEN%" >nul 2>&1
-
-echo.
 echo [*] Merestart 1win-sniper-hub dengan token baru...
 call pm2 restart 1win-sniper-hub >nul 2>&1
 call pm2 save >nul 2>&1
+echo [OK] Token Telegram Bot berhasil disimpan!
+ping 127.0.0.1 -n 3 >nul
+goto MENU
+
+:SET_CF_TOKEN
 echo.
-echo [OK] Token Telegram Bot berhasil disimpan dan 1win-sniper-hub telah aktif!
-echo.
-echo Tekan sembarang tombol untuk kembali ke menu...
-pause >nul
+set "NEW_CF="
+set /p "NEW_CF=Paste Token Cloudflare Tunnel (base64 token): "
+if "%NEW_CF%"=="" (
+    echo [!] Input kosong. Token tidak diubah.
+    ping 127.0.0.1 -n 3 >nul
+    goto MENU
+)
+"%PYTHON_EXE%" -c "import sys, pathlib; t=sys.argv[1].strip(); ep=pathlib.Path('core/.env'); lines=[l for l in (ep.read_text('utf-8').splitlines() if ep.exists() else []) if not l.startswith('CLOUDFLARE_TUNNEL_TOKEN=')]; lines.append('CLOUDFLARE_TUNNEL_TOKEN=' + t); ep.write_text('\n'.join(lines) + '\n', encoding='utf-8')" "%NEW_CF%" >nul 2>&1
+echo [*] Merestart 1win-tunnel dengan token baru...
+call pm2 restart 1win-tunnel >nul 2>&1
+call pm2 save >nul 2>&1
+echo [OK] Token Cloudflare Tunnel berhasil disimpan!
+ping 127.0.0.1 -n 3 >nul
 goto MENU
 
 :OPEN_WEB

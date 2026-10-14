@@ -99,7 +99,10 @@ def load_env():
                     line = line.strip()
                     if line and not line.startswith("#") and "=" in line:
                         k, v = line.split("=", 1)
-                        os.environ.setdefault(k.strip(), v.strip())
+                        key = k.strip()
+                        val = v.strip().strip("'\"")
+                        if val:
+                            os.environ[key] = val
             except Exception:
                 pass
 
@@ -107,8 +110,8 @@ def main():
     load_env()
     local_ip = get_local_ip()
     binary = find_cloudflared()
-    token = os.getenv("CLOUDFLARE_TUNNEL_TOKEN", "").strip()
-    tunnel_name = os.getenv("CLOUDFLARE_TUNNEL_NAME", "topnodtools").strip()
+    token = os.getenv("CLOUDFLARE_TUNNEL_TOKEN", "").strip().strip("'\"")
+    tunnel_name = os.getenv("CLOUDFLARE_TUNNEL_NAME", "topnodtools").strip().strip("'\"")
 
     if token:
         args = [binary, "tunnel", "run", "--token", token]
@@ -119,7 +122,10 @@ def main():
     print("🚀 1WIN CLOUDFLARE TUNNEL RUNNER")
     print(f"[*] Binary  : {binary}")
     print(f"[*] Ingress : topnodtools.web.id -> http://{local_ip}:6000")
-    print(f"[*] Command : {' '.join(args)}")
+    if token:
+        print(f"[*] Mode    : Token Connector (Length: {len(token)})")
+    else:
+        print(f"[*] Mode    : Local Named Tunnel ({tunnel_name})")
     print("=" * 60)
     sys.stdout.flush()
 

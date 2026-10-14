@@ -128,17 +128,26 @@ if [ ! -f "core/.env" ]; then
   echo "PUBLIC_ACCESS=true" >> core/.env
 fi
 
-# 6. Jalankan PM2 (Restart proses jika sebelumnya crash / bermasalah)
-echo "[*] Menjalankan 1win-sniper-hub & Cloudflare Tunnel via PM2..."
-pkill -9 -f "cloudflared" 2>/dev/null || true
+# 6. Jalankan PM2 (HANYA jalankan service 1win-sniper-hub & 1win-tunnel, dilarang menyentuh aplikasi lain)
+echo "[*] Menjalankan 1win-sniper-hub & 1win-tunnel via PM2..."
 pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+pkill -9 -f "topnodtools" 2>/dev/null || true
 pm2 delete 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
-pm2 start core/ecosystem.config.js || {
-  echo "[!] PM2 daemon mengalami kendala PID, merefresh daemon via pm2 update..."
-  pm2 update || true
-  pm2 start core/ecosystem.config.js || true
-}
+pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || pm2 restart 1win-sniper-hub >/dev/null 2>&1 || true
+pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || pm2 restart 1win-tunnel >/dev/null 2>&1 || true
 pm2 save >/dev/null 2>&1 || true
+
+# Cek status token Cloudflare Tunnel
+CF_CHECK=""
+if [ -f "core/.env" ]; then
+  CF_CHECK=$(grep -E "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r\n')
+fi
+if [ -z "$CF_CHECK" ] && [ ! -f "$HOME/.cloudflared/58eb85db-cd18-45a5-ad97-b6b99ea9848f.json" ]; then
+  echo ""
+  echo "⚠️  Catatan: Cloudflare Tunnel Token belum dikonfigurasi di core/.env."
+  echo "    Gunakan Menu [7] -> [2] untuk memasukkan token Cloudflare jika ingin domain live."
+  sleep 2
+fi
 
 # 7. Tampilkan Interface Menu Interaktif
 while true; do
@@ -160,12 +169,11 @@ while true; do
   echo "   [4] 🛑 Hentikan Service (Stop 1win-sniper-hub & 1win-tunnel)"
   echo "   [5] 🚀 Jalankan Ulang Service (Start 1win-sniper-hub & 1win-tunnel)"
   echo "   [6] 🗑️ Hapus Service dari PM2 (Delete 1win-sniper-hub & 1win-tunnel)"
-  echo "   [7] 🔑 Set / Ubah Token Bot Telegram (Paste Token Langsung)"
-  echo "   [8] 🛠️ Perbaiki PM2 Daemon (pm2 update / heal PID error)"
+  echo "   [7] 🔑 Set / Ubah Token (Telegram Bot & Cloudflare Tunnel)"
   echo "   [0] ❌ Keluar Menu (Service Tetap Berjalan di Background)"
   echo ""
   echo "======================================================================"
-  read -r -p "Pilih menu [0-8]: " opt
+  read -r -p "Pilih menu [0-7]: " opt
 
   case "$opt" in
     1)
@@ -195,13 +203,13 @@ while true; do
       echo "======================================================================"
       echo ""
       echo "[*] Membersihkan proses tunnel lama..."
-      pkill -9 -f "cloudflared" 2>/dev/null || true
       pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+      pkill -9 -f "topnodtools" 2>/dev/null || true
       sleep 1
       echo "[*] Merestart 1win-sniper-hub..."
-      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub || true
+      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Merestart 1win-tunnel..."
-      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel || true
+      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!"
@@ -217,8 +225,8 @@ while true; do
       pm2 stop 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Menghentikan 1win-tunnel..."
       pm2 stop 1win-tunnel >/dev/null 2>&1 || true
-      pkill -9 -f "cloudflared" 2>/dev/null || true
       pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+      pkill -9 -f "topnodtools" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
@@ -231,14 +239,13 @@ while true; do
       echo "======================================================================"
       echo ""
       echo "[*] Membersihkan proses tunnel lama..."
-      pkill -9 -f "cloudflared" 2>/dev/null || true
       pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+      pkill -9 -f "topnodtools" 2>/dev/null || true
       sleep 1
-      echo "[*] Memulai service 1win-sniper-hub & 1win-tunnel..."
-      pm2 start core/ecosystem.config.js || {
-        pm2 restart 1win-sniper-hub 2>/dev/null || pm2 start core/ecosystem.config.js --only 1win-sniper-hub || true
-        pm2 restart 1win-tunnel 2>/dev/null || pm2 start core/ecosystem.config.js --only 1win-tunnel || true
-      }
+      echo "[*] Memulai service 1win-sniper-hub..."
+      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
+      echo "[*] Memulai service 1win-tunnel..."
+      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!"
@@ -254,8 +261,8 @@ while true; do
       pm2 delete 1win-sniper-hub >/dev/null 2>&1 || true
       echo "[*] Menghapus 1win-tunnel dari PM2..."
       pm2 delete 1win-tunnel >/dev/null 2>&1 || true
-      pkill -9 -f "cloudflared" 2>/dev/null || true
       pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+      pkill -9 -f "topnodtools" 2>/dev/null || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah berhasil dihapus dari PM2!"
@@ -265,81 +272,115 @@ while true; do
     7)
       clear
       echo "======================================================================"
-      echo "   🔑 SET / UBAH TOKEN BOT TELEGRAM"
+      echo "   🔑 PENGATURAN KREDENSIAL / TOKEN (1WIN SNIPER)"
       echo "======================================================================"
       echo ""
-      CURRENT_TOKEN=""
+      CUR_TG_TOKEN=""
+      CUR_CF_TOKEN=""
       if [ -f "core/.env" ]; then
-        CURRENT_TOKEN=$(grep -E "^TELEGRAM_BOT_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
+        CUR_TG_TOKEN=$(grep -E "^TELEGRAM_BOT_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
+        CUR_CF_TOKEN=$(grep -E "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env | cut -d'=' -f2- | tr -d ' "\r')
       fi
-      if [ -z "$CURRENT_TOKEN" ] && [ -f "core/config.json" ]; then
-        CURRENT_TOKEN=$(grep -o '"telegram_bot_token": *"[^"]*"' core/config.json | cut -d'"' -f4)
+      if [ -z "$CUR_TG_TOKEN" ] && [ -f "core/config.json" ]; then
+        CUR_TG_TOKEN=$(grep -o '"telegram_bot_token": *"[^"]*"' core/config.json | cut -d'"' -f4)
       fi
 
-      if [ -n "$CURRENT_TOKEN" ] && [ "$CURRENT_TOKEN" != "YOUR_TELEGRAM_BOT_TOKEN_FROM_BOTFATHER" ]; then
-        TOKEN_LEN=${#CURRENT_TOKEN}
+      if [ -n "$CUR_TG_TOKEN" ] && [ "$CUR_TG_TOKEN" != "YOUR_TELEGRAM_BOT_TOKEN_FROM_BOTFATHER" ]; then
+        TOKEN_LEN=${#CUR_TG_TOKEN}
         if [ "$TOKEN_LEN" -gt 15 ]; then
-          PREFIX_T="${CURRENT_TOKEN:0:8}"
-          SUFFIX_T="${CURRENT_TOKEN: -6}"
-          echo "Token saat ini : ${PREFIX_T}********${SUFFIX_T}"
+          echo "1. Token Telegram Bot : ${CUR_TG_TOKEN:0:8}********${CUR_TG_TOKEN: -6}"
         else
-          echo "Token saat ini : Terpasang"
+          echo "1. Token Telegram Bot : Terpasang"
         fi
       else
-        echo "Token saat ini : (Belum diatur / Masih default template)"
+        echo "1. Token Telegram Bot : (Belum diatur)"
       fi
-      echo ""
-      read -r -p "Paste Token Telegram Bot Anda (dari @BotFather): " NEW_TOKEN
-      NEW_TOKEN=$(echo "$NEW_TOKEN" | tr -d ' \r\n"')
 
-      if [ -n "$NEW_TOKEN" ]; then
-        touch core/.env
-        if grep -q "^TELEGRAM_BOT_TOKEN=" core/.env; then
-          sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${NEW_TOKEN}|" core/.env
+      if [ -n "$CUR_CF_TOKEN" ]; then
+        CF_LEN=${#CUR_CF_TOKEN}
+        if [ "$CF_LEN" -gt 15 ]; then
+          echo "2. Token Cloudflare   : ${CUR_CF_TOKEN:0:8}********${CUR_CF_TOKEN: -6}"
         else
-          echo "TELEGRAM_BOT_TOKEN=${NEW_TOKEN}" >> core/.env
+          echo "2. Token Cloudflare   : Terpasang"
         fi
+      else
+        echo "2. Token Cloudflare   : (Belum diatur - dibutuhkan untuk domain topnodtools.web.id)"
+      fi
 
-        if [ -f "core/config.json" ]; then
-          $PYTHON_EXEC -c "
+      echo ""
+      echo "   [1] Ubah Token Telegram Bot"
+      echo "   [2] Ubah Token Cloudflare Tunnel (topnodtools)"
+      echo "   [0] Kembali ke Menu Utama"
+      echo ""
+      read -r -p "Pilih opsi [0-2]: " t_opt
+
+      case "$t_opt" in
+        1)
+          echo ""
+          read -r -p "Paste Token Telegram Bot (dari @BotFather): " NEW_TG
+          NEW_TG=$(echo "$NEW_TG" | tr -d ' \r\n"')
+          if [ -n "$NEW_TG" ]; then
+            touch core/.env
+            if grep -q "^TELEGRAM_BOT_TOKEN=" core/.env; then
+              sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${NEW_TG}|" core/.env
+            else
+              echo "TELEGRAM_BOT_TOKEN=${NEW_TG}" >> core/.env
+            fi
+
+            if [ -f "core/config.json" ]; then
+              $PYTHON_EXEC -c "
 import json, pathlib
 p = pathlib.Path('core/config.json')
 try:
     d = json.loads(p.read_text(encoding='utf-8'))
 except:
     d = {}
-d['telegram_bot_token'] = '''${NEW_TOKEN}'''
+d['telegram_bot_token'] = '''${NEW_TG}'''
 p.write_text(json.dumps(d, indent=2), encoding='utf-8')
 " 2>/dev/null || true
-        fi
+            fi
 
-        echo ""
-        echo "[*] Merestart 1win-sniper-hub dengan token baru..."
-        pm2 restart 1win-sniper-hub >/dev/null 2>&1 || true
-        pm2 save >/dev/null 2>&1 || true
-        echo ""
-        echo "[OK] Token Telegram Bot berhasil disimpan dan 1win-sniper-hub telah aktif!"
-      else
-        echo ""
-        echo "[!] Input kosong. Token tidak diubah."
-      fi
-      echo ""
-      read -r -p "Tekan Enter untuk kembali ke menu..." dummy
-      ;;
-    8)
-      clear
-      echo "======================================================================"
-      echo "   🛠️ MEMPERBAIKI PM2 DAEMON (HEAL STUCK PID / PM2_ENV)"
-      echo "======================================================================"
-      echo ""
-      echo "[*] Menjalankan pm2 update untuk membersihkan state PM2 yang korup..."
-      pkill -9 -f "cloudflared" 2>/dev/null || true
-      pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
-      pm2 update
-      echo ""
-      echo "[OK] PM2 Daemon berhasil disegarkan! Semua service tetap aman."
-      echo ""
-      read -r -p "Tekan Enter untuk kembali ke menu..." dummy
+            echo ""
+            echo "[*] Merestart 1win-sniper-hub dengan token baru..."
+            pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >/dev/null 2>&1 || true
+            pm2 save >/dev/null 2>&1 || true
+            echo ""
+            echo "[OK] Token Telegram Bot berhasil disimpan!"
+          else
+            echo ""
+            echo "[!] Input kosong. Token tidak diubah."
+          fi
+          sleep 2
+          ;;
+        2)
+          echo ""
+          read -r -p "Paste Token Cloudflare Tunnel (base64 token): " NEW_CF
+          NEW_CF=$(echo "$NEW_CF" | tr -d ' \r\n"')
+          if [ -n "$NEW_CF" ]; then
+            touch core/.env
+            if grep -q "^CLOUDFLARE_TUNNEL_TOKEN=" core/.env; then
+              sed -i "s|^CLOUDFLARE_TUNNEL_TOKEN=.*|CLOUDFLARE_TUNNEL_TOKEN=${NEW_CF}|" core/.env
+            else
+              echo "CLOUDFLARE_TUNNEL_TOKEN=${NEW_CF}" >> core/.env
+            fi
+
+            echo ""
+            echo "[*] Merestart 1win-tunnel dengan token Cloudflare baru..."
+            pkill -9 -f "tunnel_runner.py" 2>/dev/null || true
+            pkill -9 -f "topnodtools" 2>/dev/null || true
+            pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >/dev/null 2>&1 || true
+            pm2 save >/dev/null 2>&1 || true
+            echo ""
+            echo "[OK] Token Cloudflare Tunnel berhasil disimpan dan 1win-tunnel aktif!"
+          else
+            echo ""
+            echo "[!] Input kosong. Token tidak diubah."
+          fi
+          sleep 2
+          ;;
+        *)
+          ;;
+      esac
       ;;
     0)
       clear
@@ -350,7 +391,7 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
       exit 0
       ;;
     *)
-      echo "[!] Pilihan tidak valid. Silakan pilih 0-8."
+      echo "[!] Pilihan tidak valid. Silakan pilih 0-7."
       sleep 2
       ;;
   esac
