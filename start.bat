@@ -93,8 +93,10 @@ echo ======================================================================
 echo    🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
-echo [*] Hanya merestart service 1win-sniper-hub & 1win-tunnel...
-pm2 restart 1win-sniper-hub 1win-tunnel
+echo [*] Merestart 1win-sniper-hub...
+pm2 restart 1win-sniper-hub >nul 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
+echo [*] Merestart 1win-tunnel...
+pm2 restart 1win-tunnel >nul 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
 pm2 save >nul 2>&1
 echo.
 echo [OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!
@@ -108,8 +110,10 @@ echo ======================================================================
 echo    🛑 MENGHENTIKAN 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
-echo [*] Hanya menghentikan service 1win-sniper-hub & 1win-tunnel...
-pm2 stop 1win-sniper-hub 1win-tunnel
+echo [*] Menghentikan 1win-sniper-hub...
+pm2 stop 1win-sniper-hub >nul 2>&1
+echo [*] Menghentikan 1win-tunnel...
+pm2 stop 1win-tunnel >nul 2>&1
 pm2 save >nul 2>&1
 echo.
 echo [OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman).
@@ -123,8 +127,20 @@ echo ======================================================================
 echo    🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL
 echo ======================================================================
 echo.
-echo [*] Menjalankan kembali service 1win-sniper-hub & 1win-tunnel...
-pm2 start 1win-sniper-hub 1win-tunnel >nul 2>&1 || pm2 start core/ecosystem.config.js
+echo [*] Memulai 1win-sniper-hub...
+pm2 describe 1win-sniper-hub >nul 2>&1
+if %errorlevel% equ 0 (
+    pm2 restart 1win-sniper-hub >nul 2>&1
+) else (
+    pm2 start core/ecosystem.config.js --only 1win-sniper-hub >nul 2>&1
+)
+echo [*] Memulai 1win-tunnel...
+pm2 describe 1win-tunnel >nul 2>&1
+if %errorlevel% equ 0 (
+    pm2 restart 1win-tunnel >nul 2>&1
+) else (
+    pm2 start core/ecosystem.config.js --only 1win-tunnel >nul 2>&1
+)
 pm2 save >nul 2>&1
 echo.
 echo [OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!

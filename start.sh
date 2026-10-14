@@ -185,8 +185,10 @@ while true; do
       echo "   🔄 MERESTART 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      echo "[*] Hanya merestart service 1win-sniper-hub & 1win-tunnel..."
-      pm2 restart 1win-sniper-hub 1win-tunnel
+      echo "[*] Merestart 1win-sniper-hub..."
+      pm2 restart 1win-sniper-hub >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-sniper-hub
+      echo "[*] Merestart 1win-tunnel..."
+      pm2 restart 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js --only 1win-tunnel
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] Service 1win-sniper-hub & 1win-tunnel berhasil direstart!"
@@ -198,8 +200,10 @@ while true; do
       echo "   🛑 MENGHENTIKAN 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      echo "[*] Hanya menghentikan service 1win-sniper-hub & 1win-tunnel..."
-      pm2 stop 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || true
+      echo "[*] Menghentikan 1win-sniper-hub..."
+      pm2 stop 1win-sniper-hub >/dev/null 2>&1 || true
+      echo "[*] Menghentikan 1win-tunnel..."
+      pm2 stop 1win-tunnel >/dev/null 2>&1 || true
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel telah dihentikan (service lain tetap aman)."
@@ -211,8 +215,19 @@ while true; do
       echo "   🚀 MENJALANKAN ULANG 1WIN SNIPER HUB & CLOUDFLARE TUNNEL"
       echo "======================================================================"
       echo ""
-      echo "[*] Menjalankan kembali service 1win-sniper-hub & 1win-tunnel..."
-      pm2 start 1win-sniper-hub 1win-tunnel >/dev/null 2>&1 || pm2 start core/ecosystem.config.js
+      echo "[*] Memulai 1win-sniper-hub..."
+      if pm2 describe 1win-sniper-hub >/dev/null 2>&1; then
+        pm2 restart 1win-sniper-hub
+      else
+        pm2 start core/ecosystem.config.js --only 1win-sniper-hub
+      fi
+
+      echo "[*] Memulai 1win-tunnel..."
+      if pm2 describe 1win-tunnel >/dev/null 2>&1; then
+        pm2 restart 1win-tunnel
+      else
+        pm2 start core/ecosystem.config.js --only 1win-tunnel
+      fi
       pm2 save >/dev/null 2>&1 || true
       echo ""
       echo "[OK] 1win-sniper-hub dan 1win-tunnel berhasil dijalankan!"
