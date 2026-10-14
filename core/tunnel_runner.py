@@ -12,6 +12,18 @@ import signal
 import subprocess
 from pathlib import Path
 
+# Ensure UTF-8 output even in non-UTF-8 console/PM2 pipes on Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = Path(__file__).resolve().parent
 
