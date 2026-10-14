@@ -83,7 +83,20 @@ def main():
     print("=" * 60)
     sys.stdout.flush()
 
-    proc = subprocess.Popen(args)
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
+    proc = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        creationflags=creationflags,
+        text=True,
+        bufsize=1,
+        encoding="utf-8",
+        errors="replace"
+    )
 
     def handle_signal(sig, frame):
         print(f"\n[Tunnel] Menghentikan cloudflared (PID {proc.pid})...")
@@ -96,6 +109,11 @@ def main():
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
+
+    if proc.stdout:
+        for line in iter(proc.stdout.readline, ""):
+            sys.stdout.write(line)
+            sys.stdout.flush()
 
     ret = proc.wait()
     sys.exit(ret)
