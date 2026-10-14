@@ -13,25 +13,32 @@ Bot sniper presale & DEX resmi untuk token **$1WIN** on-chain Solana Mainnet den
 
 ## ⚡ Instalasi Cepat (Copy-Paste Ready)
 
-### 📱 1. Termux (Android)
+### 🐧 1. Linux VPS (Ubuntu / Debian / CentOS) - All-in-One PM2
+Cukup jalankan satu perintah berikut di terminal VPS:
 ```bash
-pkg update -y && pkg install -y git python
+git clone https://github.com/Imammaulidy/snip1win.git && cd snip1win && bash START_PM2.sh
+```
+> Script otomatis memeriksa Python, Node.js, PM2, Cloudflared, venv, dan langsung online ke `https://topnodtools.web.id`.  
+> Untuk stop: `bash STOP_PM2.sh`
+
+### 📱 2. Termux (Android) - All-in-One PM2
+```bash
+pkg update -y && pkg install -y git python nodejs
 git clone https://github.com/Imammaulidy/snip1win.git
 cd snip1win
-pip install -r requirements.txt
-sh start_bot.sh
+bash START_PM2.sh
 ```
 
-### 💻 2. Windows (PC / Laptop)
-1. Buka PowerShell / Command Prompt lalu jalankan:
+### 💻 3. Windows (PC / Laptop)
+1. Buka PowerShell / Command Prompt:
 ```cmd
 git clone https://github.com/Imammaulidy/snip1win.git
 cd snip1win
 pip install -r requirements.txt
 ```
 2. **Jalankan Bot**:
-- **Mode Background PM2 (Recommended)**: Double-click file [`START_PM2.bat`](START_PM2.bat) (Otomatis menjalankan Bot Port 6000 + Cloudflare Tunnel `topnodtools.web.id`).
-- **Mode Konsol Biasa**: Double-click file [`START_BOT.bat`](START_BOT.bat).
+- **Background PM2 (Recommended)**: Double-click [`START_PM2.bat`](START_PM2.bat) (Otomatis Bot Port 6000 + Cloudflare `topnodtools.web.id`).
+- **Konsol Biasa**: Double-click [`START_BOT.bat`](START_BOT.bat).
 - **Hentikan PM2**: Double-click [`STOP_PM2.bat`](STOP_PM2.bat).
 
 ---
