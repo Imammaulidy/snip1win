@@ -1,0 +1,16 @@
+{
+  "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN_FROM_BOTFATHER",
+  "allowed_user_ids": [123456789],
+  "solana_rpc_url": "https://api.mainnet-beta.solana.com",
+  "solana_private_key": "YOUR_SOLANA_BASE58_PRIVATE_KEY",
+  "token_ca": "FjPKUGnF5zBpdEv18gT8FJCtxh3MKrFkoeYekgYr1win",
+  "sale_program_id": "GWvQinGBRa7ZUzhXY23MrLjdsx3KfRGxH8yXURBwrz1R",
+  "sale_state_pda": "E9Sdba46tH8KD9PPwZngGwkHVnmrbKL64Qz8PnBMiiAL",
+  "deposit_vault_usdc": "HciAS69vfU1ZzfWEczqwkAUfLodpbGFVALLpA1wtA5W2",
+  "usdc_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "default_purchase_usdc": 10.0,
+  "default_snipe_sol": 0.1,
+  "slippage_bps": 1000,
+  "priority_fee_micro_lamports": 100000,
+  "poll_interval_seconds": 1.0
+}

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$1WIN Sniper Terminal | Web & Telegram Sync</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              primary: '#6366f1',
+              accent: '#10b981',
+              gold: '#fbbf24',
+              dark: '#0b0e14',
+              card: '#121722',
+              border: '#1f293d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #080b11;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-card {
+      background: rgba(18, 23, 34, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-gold {
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);
+    }
+    .glow-accent {
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+
+  <!-- Header -->
+  <header class="max-w-7xl w-full mx-auto flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-gray-800">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-amber-400 flex items-center justify-center font-black text-xl text-white shadow-lg">
+        1W
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl md:text-2xl font-extrabold tracking-tight text-white">$1WIN TOKEN SNIPER</h1>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            PORT 6000 SYNC
+          </span>
+        </div>
+        <p class="text-xs text-gray-400">Solana Mainnet Terminal • Multi-Worker Presale & DEX</p>
+      </div>
+    </div>
+
+    <!-- Telegram User Profile / Auth Area -->
+    <div id="authArea" class="flex items-center gap-3">
+      <!-- Injected by JavaScript -->
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl w-full mx-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+    <!-- Left Column: Contract, Presale Status, and Multi-Worker Status (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Official CA Card -->
+      <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+            🪙 Verified Mint Address (CA)
+          </span>
+          <span class="text-[11px] font-mono bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Solana SPL</span>
+        </div>
+        <div class="bg-black/50 border border-gray-800 rounded-xl p-3 flex items-center justify-between gap-2">
+          <span id="targetCa" class="font-mono text-xs md:text-sm text-amber-200 truncate font-semibold">
+            FjPKUGnF5zBpdEv18gT8FJCtxh3MKrFkoeYekgYr1win
+          </span>
+          <button onclick="copyCa()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 active:scale-95 text-xs font-medium rounded-lg text-white transition">
+            Copy
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-2">
+          Program ID: <code class="text-indigo-300 font-mono">GWvQinGBRa7ZUzhXY23MrLjdsx3KfRGxH8yXU...</code>
+        </p>
+      </div>
+
+      <!-- Presale Countdown & On-Chain State -->
+      <div class="glass-card rounded-2xl p-6 relative">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">On-Chain Presale Status</h2>
+
+        <!-- Countdown Box -->
+        <div class="bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 rounded-2xl p-5 text-center mb-6 glow-gold">
+          <span class="text-xs text-indigo-300 uppercase tracking-widest font-semibold block mb-1">Status Penjualan</span>
+          <div id="countdownTimer" class="font-mono text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+            Memuat...
+          </div>
+          <span id="saleDateText" class="text-xs text-gray-400 block mt-1">15 Oktober 2026 • 15:00 UTC</span>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-black/30 border border-gray-800/80 p-3 rounded-xl">
+            <span class="text-gray-400 block">Harga Presale</span>
+            <span class="text-base font-bold text-emerald-400 font-mono">$0.03 USDC</span>
+          </div>
+          <div class="bg-black/30 border border-gray-800/80 p-3 rounded-xl">
+            <span class="text-gray-400 block">Alokasi Sale</span>
+            <span class="text-base font-bold text-white font-mono">130,000,000</span>
+          </div>
+          <div class="bg-black/30 border border-gray-800/80 p-3 rounded-xl">
+            <span class="text-gray-400 block">Min / Max Pembelian</span>
+            <span class="text-sm font-semibold text-gray-300 font-mono">10 / 250,000 USDC</span>
+          </div>
+          <div class="bg-black/30 border border-gray-800/80 p-3 rounded-xl">
+            <span class="text-gray-400 block">Likuiditas DEX (Jupiter)</span>
+            <span id="dexStatusBadge" class="text-sm font-semibold text-amber-400 font-mono">Memeriksa...</span>
+          </div>
+        </div>
+
+        <!-- Total Contributed Progress -->
+        <div class="mt-5">
+          <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+            <span>Total USDC Terkumpul:</span>
+            <span id="usdcContributedText" class="font-mono font-bold text-white">$0.00 USDC</span>
+          </div>
+          <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+            <div id="usdcProgressBar" class="bg-gradient-to-r from-indigo-500 to-amber-400 h-full w-[2%] transition-all duration-500"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Worker Engine Architecture Card -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+            🤖 Arsitektur Multi-Worker Engine
+          </h2>
+          <span class="text-[10px] font-mono bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
+            Sub-Milidetik
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Worker 1: Satpam Radar -->
+          <div class="bg-black/40 border border-gray-800 rounded-xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base">🛡️</span>
+              <div>
+                <span class="text-xs font-bold text-white block">Worker Satpam (Radar CA & Jaringan)</span>
+                <span class="text-[10px] text-gray-400">Scan blok Solana & RPC tiap 250ms</span>
+              </div>
+            </div>
+            <span id="workerSatpamBadge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              STANDBY
+            </span>
+          </div>
+
+          <!-- Worker 2: Buy Presale & DEX Executor -->
+          <div class="bg-black/40 border border-gray-800 rounded-xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base">⚡</span>
+              <div>
+                <span class="text-xs font-bold text-white block">Worker Buy (Eksekusi Tembak Instan)</span>
+                <span class="text-[10px] text-gray-400">Tembak sub-milidetik begitu Satpam trigger</span>
+              </div>
+            </div>
+            <span id="workerBuyBadge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+              STANDBY
+            </span>
+          </div>
+
+          <!-- Worker 3: One-Click Sell Engine -->
+          <div class="bg-black/40 border border-gray-800 rounded-xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base">🔴</span>
+              <div>
+                <span class="text-xs font-bold text-white block">Worker Sell (One-Click Profit Taker)</span>
+                <span class="text-[10px] text-gray-400">Jual instan 25% / 50% / 100% via Jupiter</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              READY
+            </span>
+          </div>
+        </div>
+
+        <!-- Master Auto-Sniper Toggle -->
+        <div class="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-white block">Otomasi Satpam & Buy</span>
+            <span id="autoDesc" class="text-[11px] text-gray-400">Worker Satpam otomatis perintahkan Worker Buy saat launching</span>
+          </div>
+          <button onclick="toggleAutoSniper()" id="btnToggleAuto" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-bold rounded-lg text-white transition shadow">
+            Aktifkan Worker
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: User Wallet, Sniping Execution, & One-Click Sell (7 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- User Wallet Card -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400">Solana Sniper Wallet (Sync)</h2>
+            <p class="text-xs text-gray-500">Tersinkronisasi 100% dengan sesi akun Telegram masing-masing</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="refreshWallet()" class="p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs transition" title="Refresh Saldo">
+              🔄 Refresh
+            </button>
+            <button onclick="openExportModal()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-amber-300 text-xs font-medium rounded-lg transition">
+              📤 Export Key
+            </button>
+          </div>
+        </div>
+
+        <!-- Wallet Address Box -->
+        <div class="bg-black/40 border border-gray-800 rounded-xl p-3 mb-4 flex items-center justify-between gap-2">
+          <div class="truncate">
+            <span class="text-[10px] text-gray-500 block uppercase font-bold tracking-wider">Deposit Address</span>
+            <span id="userWalletAddr" class="font-mono text-xs md:text-sm text-gray-200 truncate font-semibold">
+              Belum terhubung. Silakan login Telegram.
+            </span>
+          </div>
+          <button onclick="copyWallet()" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-xs rounded text-gray-300 whitespace-nowrap">
+            Salin
+          </button>
+        </div>
+
+        <!-- Balances Grid -->
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <div class="bg-indigo-950/20 border border-indigo-900/30 p-3.5 rounded-xl text-center">
+            <span class="text-xs text-indigo-300 block font-medium">Saldo SOL</span>
+            <span id="balSol" class="font-mono text-lg font-bold text-white block mt-0.5">0.0000</span>
+            <span class="text-[10px] text-gray-500">Gas Fee</span>
+          </div>
+          <div class="bg-emerald-950/20 border border-emerald-900/30 p-3.5 rounded-xl text-center">
+            <span class="text-xs text-emerald-300 block font-medium">Saldo USDC</span>
+            <span id="balUsdc" class="font-mono text-lg font-bold text-emerald-400 block mt-0.5">$0.00</span>
+            <span class="text-[10px] text-gray-500">Beli Presale</span>
+          </div>
+          <div class="bg-amber-950/20 border border-amber-900/30 p-3.5 rounded-xl text-center">
+            <span class="text-xs text-amber-300 block font-medium">Saldo $1WIN</span>
+            <span id="bal1win" class="font-mono text-lg font-bold text-amber-400 block mt-0.5">0.00</span>
+            <span class="text-[10px] text-gray-500">Token Diperoleh</span>
+          </div>
+        </div>
+
+        <!-- Wallet Setup Buttons (if no wallet) -->
+        <div id="walletSetupButtons" class="flex flex-wrap gap-2.5">
+          <button onclick="createWallet()" class="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-semibold rounded-xl transition shadow">
+            🎲 Buat Wallet Baru
+          </button>
+          <button onclick="openImportModal()" class="flex-1 py-2.5 px-4 bg-gray-800 hover:bg-gray-700 active:scale-[0.98] text-gray-200 text-xs font-semibold rounded-xl border border-gray-700 transition">
+            🔑 Import Private Key
+          </button>
+        </div>
+      </div>
+
+      <!-- Execution Console (BUY) -->
+      <div class="glass-card rounded-2xl p-6">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Sniping Execution Hub (Buy)</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Presale Direct Snipe Box -->
+          <div class="bg-black/30 border border-gray-800 p-4 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400 uppercase">⚡ Mode 1: Presale Contract</span>
+              <span class="text-[10px] font-mono text-gray-400">Gas Priority</span>
+            </div>
+            <div>
+              <label class="text-[11px] text-gray-400 block mb-1">Nominal Pembelian (USDC):</label>
+              <div class="flex items-center bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                <input id="inputUsdc" type="number" step="1" min="10" value="10" class="w-full bg-transparent px-3 py-2 text-sm text-white font-mono outline-none" />
+                <span class="px-3 text-xs text-gray-400 font-bold">USDC</span>
+              </div>
+            </div>
+            <button onclick="triggerPresaleSnipe()" id="btnPresaleSnipe" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.98] text-white font-bold text-xs rounded-lg transition shadow">
+              ⚡ Snipe Presale Now
+            </button>
+          </div>
+
+          <!-- DEX Jupiter Snipe Box -->
+          <div class="bg-black/30 border border-gray-800 p-4 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-indigo-400 uppercase">🚀 Mode 2: DEX Swap (Jupiter)</span>
+              <span class="text-[10px] font-mono text-gray-400">Slippage 10%</span>
+            </div>
+            <div>
+              <label class="text-[11px] text-gray-400 block mb-1">Nominal Swap (SOL):</label>
+              <div class="flex items-center bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                <input id="inputSol" type="number" step="0.05" min="0.01" value="0.1" class="w-full bg-transparent px-3 py-2 text-sm text-white font-mono outline-none" />
+                <span class="px-3 text-xs text-gray-400 font-bold">SOL</span>
+              </div>
+            </div>
+            <button onclick="triggerDexSnipe()" id="btnDexSnipe" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] text-white font-bold text-xs rounded-lg transition shadow">
+              🚀 Snipe DEX Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- One-Click Sell Hub (SELL) -->
+      <div class="glass-card rounded-2xl p-6 border border-red-950/40">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+              🔥 One-Click Sell Hub (Take Profit / Dump)
+            </h2>
+            <p class="text-xs text-gray-400">Jual token $1WIN Anda secara instan ke SOL via Jupiter Swap</p>
+          </div>
+          <span class="text-xs font-mono text-amber-400 font-bold bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded">
+            Hold: <span id="sellBalPreview">0.00</span> $1WIN
+          </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <button onclick="triggerSellSnipe(25)" class="py-3 bg-red-950/40 hover:bg-red-900/60 border border-red-800/50 text-red-300 font-bold text-xs rounded-xl active:scale-95 transition">
+            🔴 Jual 25%
+          </button>
+          <button onclick="triggerSellSnipe(50)" class="py-3 bg-red-900/40 hover:bg-red-800/60 border border-red-700/60 text-red-200 font-bold text-xs rounded-xl active:scale-95 transition">
+            🔴 Jual 50%
+          </button>
+          <button onclick="triggerSellSnipe(100)" class="py-3 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-extrabold text-xs rounded-xl active:scale-95 transition shadow-lg shadow-red-900/30">
+            🔥 JUAL 100% (ALL)
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Activity Terminal Logs -->
+      <div class="glass-card rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-mono">Terminal Activity Log</span>
+          <button onclick="clearLogs()" class="text-[10px] text-gray-500 hover:text-gray-300">Clear</button>
+        </div>
+        <div id="terminalLog" class="bg-black/60 border border-gray-900 rounded-xl p-3 h-32 overflow-y-auto font-mono text-[11px] text-gray-300 space-y-1">
+          <div class="text-indigo-400">[SYSTEM] Terminal initialized on port 6000. Listening to Solana RPC...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Login Modal -->
+  <div id="modalLogin" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          ✈️ Login Akun Telegram Anda
+        </h3>
+        <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+      </div>
+      <p class="text-xs text-gray-400 mb-4">
+        Masuk dengan Telegram agar wallet dan data saldo di Web Terminal tersinkronisasi 100% dengan bot Telegram Anda:
+      </p>
+
+      <!-- Option 1: Direct ID Sync -->
+      <div class="bg-black/40 border border-gray-800 rounded-xl p-3.5 mb-4">
+        <span class="text-xs font-bold text-white block mb-1">Opsi 1: Masukkan ID Telegram Anda</span>
+        <span class="text-[10px] text-gray-400 block mb-2">Dapatkan ID Anda dengan mengetik apa saja ke bot @snip1winprimatabot</span>
+        <div class="flex gap-2">
+          <input id="inputTelegramId" type="number" placeholder="Contoh ID: 123456789" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
+          <button onclick="submitTelegramIdAuth()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white rounded-lg transition">
+            Sinkronkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Option 2: Bot Direct Link -->
+      <div class="bg-black/40 border border-gray-800 rounded-xl p-3.5 mb-4 text-center">
+        <span class="text-xs font-bold text-white block mb-1">Opsi 2: Buka Bot Telegram Otomatis</span>
+        <span class="text-[10px] text-gray-400 block mb-2.5">Klik link di bawah dan pilih menu Web Terminal</span>
+        <a href="https://t.me/snip1winprimatabot?start=weblogin" target="_blank" class="inline-block w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold rounded-lg text-white transition">
+          🚀 Buka Bot @snip1winprimatabot
+        </a>
+      </div>
+
+      <!-- Option 3: Official Telegram Widget Container -->
+      <div class="text-center pt-2">
+        <span class="text-[11px] text-gray-500 block mb-2">Atau gunakan tombol resmi Telegram:</span>
+        <div id="tgWidgetContainer" class="flex justify-center"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="modalImport" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <h3 class="text-base font-bold text-white mb-2">🔑 Import Private Key Solana</h3>
+      <p class="text-xs text-gray-400 mb-4">Masukkan private key format Base58 Anda. Kunci Anda disimpan aman dan terenkripsi untuk sesi Anda.</p>
+      <textarea id="importKeyInput" rows="3" placeholder="Contoh: 5M..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 font-mono text-xs text-white outline-none focus:border-indigo-500 mb-4"></textarea>
+      <div class="flex gap-2">
+        <button onclick="closeImportModal()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-medium rounded-lg text-gray-300">Batal</button>
+        <button onclick="submitImportKey()" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs font-bold rounded-lg text-white">Import Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="modalExport" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <h3 class="text-base font-bold text-amber-400 mb-2">🔐 Export Private Key</h3>
+      <p class="text-xs text-gray-400 mb-3">Salin private key ini untuk diimpor ke dompet Phantom / Solflare. Jangan berikan kepada siapa pun!</p>
+      <div class="bg-black/60 border border-gray-800 rounded-xl p-3 mb-4">
+        <code id="exportKeyText" class="font-mono text-xs text-amber-200 break-all select-all">Memuat...</code>
+      </div>
+      <button onclick="closeExportModal()" class="w-full py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold rounded-lg text-white">Tutup</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl w-full mx-auto pt-6 text-center text-xs text-gray-500 border-t border-gray-800/60 mt-6">
+    <p>1WIN Token Sale Sniper Hub • Running via PM2 & Cloudflare Tunnel (<span class="text-indigo-400 font-mono">topnodtools.web.id</span>)</p>
+  </footer>
+
+  <!-- Frontend Logic -->
+  <script>
+    let currentUser = null;
+    let autoRunning = false;
+
+    // Log Helper
+    function addLog(msg, type = 'info') {
+      const container = document.getElementById('terminalLog');
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      if (type === 'success') div.className = 'text-emerald-400';
+      else if (type === 'error') div.className = 'text-red-400';
+      else div.className = 'text-gray-300';
+      div.innerHTML = `<span class="text-gray-500">[${time}]</span> ${msg}`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('terminalLog').innerHTML = '';
+    }
+
+    function copyCa() {
+      const ca = document.getElementById('targetCa').innerText.trim();
+      navigator.clipboard.writeText(ca);
+      addLog(`CA disalin: ${ca}`, 'success');
+    }
+
+    function copyWallet() {
+      const addr = document.getElementById('userWalletAddr').innerText.trim();
+      if (!addr.includes('Belum terhubung')) {
+        navigator.clipboard.writeText(addr);
+        addLog(`Alamat wallet disalin: ${addr}`, 'success');
+      }
+    }
+
+    // Modal Handlers
+    function openLoginModal() {
+      document.getElementById('modalLogin').classList.remove('hidden');
+      injectTelegramWidget();
+    }
+    function closeLoginModal() { document.getElementById('modalLogin').classList.add('hidden'); }
+    function openImportModal() { document.getElementById('modalImport').classList.remove('hidden'); }
+    function closeImportModal() { document.getElementById('modalImport').classList.add('hidden'); }
+    function openExportModal() {
+      document.getElementById('modalExport').classList.remove('hidden');
+      fetch('/api/user/wallet/export', { credentials: 'include' })
+        .then(r => r.json())
+        .then(res => {
+          document.getElementById('exportKeyText').innerText = res.private_key || res.error || 'Tidak ada key';
+        });
+    }
+    function closeExportModal() { document.getElementById('modalExport').classList.add('hidden'); }
+
+    // Inject Telegram Official Widget safely via DOM element
+    function injectTelegramWidget() {
+      const container = document.getElementById('tgWidgetContainer');
+      if (container && !container.hasChildNodes()) {
+        const script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.setAttribute('data-telegram-login', 'snip1winprimatabot');
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+        script.setAttribute('data-request-access', 'write');
+        script.async = true;
+        container.appendChild(script);
+      }
+    }
+
+    // Telegram Login Callback
+    window.onTelegramAuth = function(user) {
+      addLog(`Mengautentikasi pengguna Telegram: @${user.username || user.first_name}...`);
+      fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          currentUser = res.user;
+          localStorage.setItem('tg_user', JSON.stringify(currentUser));
+          renderUserProfile(currentUser);
+          closeLoginModal();
+          refreshWallet();
+          addLog(`Login berhasil sebagai: @${currentUser.username || currentUser.first_name}`, 'success');
+        } else {
+          addLog(`Gagal login Telegram: ${res.error}`, 'error');
+        }
+      })
+      .catch(err => addLog(`Error auth: ${err}`, 'error'));
+    };
+
+    function submitTelegramIdAuth() {
+      const uid = document.getElementById('inputTelegramId').value.trim();
+      if (!uid) {
+        alert('Masukkan ID Telegram Anda!');
+        return;
+      }
+      fetch('/api/auth/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: parseInt(uid) }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          currentUser = res.user;
+          localStorage.setItem('tg_user', JSON.stringify(currentUser));
+          renderUserProfile(currentUser);
+          closeLoginModal();
+          refreshWallet();
+          addLog(`Sinkronisasi Akun Telegram ID ${uid} Berhasil!`, 'success');
+        } else {
+          addLog(`Gagal sync: ${res.error}`, 'error');
+        }
+      });
+    }
+
+    function logoutTelegram() {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        .then(() => {
+          localStorage.removeItem('tg_user');
+          currentUser = null;
+          renderUserProfile(null);
+          document.getElementById('userWalletAddr').innerText = 'Belum terhubung. Silakan login Telegram.';
+          document.getElementById('balSol').innerText = '0.0000';
+          document.getElementById('balUsdc').innerText = '$0.00';
+          document.getElementById('bal1win').innerText = '0.00';
+          document.getElementById('sellBalPreview').innerText = '0.00';
+          addLog('Sesi Telegram diakhiri.', 'info');
+        });
+    }
+
+    function renderUserProfile(u) {
+      const area = document.getElementById('authArea');
+      if (u) {
+        area.innerHTML = `
+          <div class="flex items-center gap-2.5 bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5">
+            <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs text-white">
+              ${(u.first_name || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div class="text-left">
+              <span class="text-xs font-bold text-white block leading-tight">${u.first_name || 'User'}</span>
+              <span class="text-[10px] text-gray-400 block leading-tight">ID: ${u.id}</span>
+            </div>
+            <button onclick="logoutTelegram()" class="ml-2 px-2 py-1 bg-red-950/40 hover:bg-red-900/60 text-red-300 text-[10px] rounded border border-red-800/40 transition">
+              Keluar
+            </button>
+          </div>
+        `;
+      } else {
+        area.innerHTML = `
+          <button onclick="openLoginModal()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-900/30 flex items-center gap-2 transition">
+            <span>✈️</span>
+            <span>Login via Telegram</span>
+          </button>
+        `;
+      }
+    }
+
+    // Refresh Wallet Data
+    function refreshWallet() {
+      fetch('/api/user/wallet', { credentials: 'include' })
+        .then(r => {
+          if (r.status === 401) {
+            return { success: false, unauth: true };
+          }
+          return r.json();
+        })
+        .then(res => {
+          if (res.unauth) {
+            document.getElementById('userWalletAddr').innerText = 'Belum terhubung. Silakan login Telegram.';
+            return;
+          }
+          if (res.success && res.wallet) {
+            document.getElementById('userWalletAddr').innerText = res.wallet.pubkey;
+            document.getElementById('balSol').innerText = res.wallet.sol.toFixed(4);
+            document.getElementById('balUsdc').innerText = '$' + res.wallet.usdc.toFixed(2);
+            document.getElementById('bal1win').innerText = res.wallet.token_1win.toLocaleString();
+            document.getElementById('sellBalPreview').innerText = res.wallet.token_1win.toLocaleString();
+            addLog(`Saldo terupdate: ${res.wallet.sol.toFixed(4)} SOL | $${res.wallet.usdc.toFixed(2)} USDC | ${res.wallet.token_1win.toLocaleString()} $1WIN`);
+          } else if (res.success && !res.wallet) {
+            document.getElementById('userWalletAddr').innerText = 'Wallet belum dibuat. Klik "Buat Wallet Baru" di bawah.';
+          }
+        });
+    }
+
+    function createWallet() {
+      addLog('Membuat wallet Solana baru...');
+      fetch('/api/user/wallet/create', { method: 'POST', credentials: 'include' })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            addLog(`Wallet baru dibuat: ${res.pubkey}`, 'success');
+            refreshWallet();
+          } else {
+            addLog(`Gagal membuat wallet: ${res.error}`, 'error');
+            if (res.error && res.error.includes('login')) openLoginModal();
+          }
+        });
+    }
+
+    function submitImportKey() {
+      const key = document.getElementById('importKeyInput').value.trim();
+      if (!key) return;
+      fetch('/api/user/wallet/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ private_key: key }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          addLog(`Wallet berhasil diimpor: ${res.pubkey}`, 'success');
+          closeImportModal();
+          refreshWallet();
+        } else {
+          addLog(`Gagal import: ${res.error}`, 'error');
+        }
+      });
+    }
+
+    // Poll On-Chain Status & Multi-Worker Status
+    function pollStatus() {
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && res.state) {
+            const s = res.state;
+            const now = Math.floor(Date.now() / 1000);
+            const diff = s.sale_start_date - now;
+            const timerEl = document.getElementById('countdownTimer');
+            if (diff > 0) {
+              const h = Math.floor(diff / 3600);
+              const m = Math.floor((diff % 3600) / 60);
+              const sec = diff % 60;
+              timerEl.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            } else {
+              timerEl.innerHTML = '<span class="text-emerald-400 animate-pulse">🟢 SALE IS LIVE!</span>';
+            }
+
+            document.getElementById('dexStatusBadge').innerText = res.dex_quote ? '🟢 Ada Likuiditas' : '⚪ Belum Ada Pool';
+            document.getElementById('usdcContributedText').innerText = '$' + s.deposits_usdc_contributed.toLocaleString() + ' USDC';
+
+            // Workers Status
+            autoRunning = res.auto_running;
+            updateWorkersUI(res.workers, res.auto_running);
+          }
+        });
+    }
+
+    function updateWorkersUI(workers, running) {
+      const satpam = document.getElementById('workerSatpamBadge');
+      const buy = document.getElementById('workerBuyBadge');
+      const btn = document.getElementById('btnToggleAuto');
+      const desc = document.getElementById('autoDesc');
+
+      if (running) {
+        satpam.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1';
+        satpam.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> RADAR AKTIF (250ms)';
+        buy.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center gap-1';
+        buy.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span> SIAGA TEMBAK';
+        btn.innerText = 'Matikan Worker';
+        btn.className = 'px-4 py-2 bg-red-600 hover:bg-red-500 active:scale-95 text-xs font-bold rounded-lg text-white transition';
+        desc.innerText = '🟢 Satpam memindai RPC tiap milidetik & Worker Buy siap tembak';
+      } else {
+        satpam.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+        satpam.innerHTML = 'STANDBY';
+        buy.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+        buy.innerHTML = 'STANDBY';
+        btn.innerText = 'Aktifkan Worker';
+        btn.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-bold rounded-lg text-white transition shadow';
+        desc.innerText = 'Worker Satpam otomatis perintahkan Worker Buy saat launching';
+      }
+    }
+
+    function toggleAutoSniper() {
+      fetch('/api/snipe/auto', { method: 'POST', credentials: 'include' })
+        .then(r => r.json())
+        .then(res => {
+          autoRunning = res.auto_running;
+          updateWorkersUI(res.workers, autoRunning);
+          addLog(res.message, autoRunning ? 'success' : 'info');
+        });
+    }
+
+    function triggerPresaleSnipe() {
+      const amt = parseFloat(document.getElementById('inputUsdc').value) || 10;
+      addLog(`⚡ Worker Buy mengeksekusi Presale Snipe: $${amt} USDC...`);
+      fetch('/api/snipe/presale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount_usdc: amt }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          addLog(`🎉 Presale Sukses! TX: ${res.tx_hash}`, 'success');
+          refreshWallet();
+        } else {
+          addLog(`❌ Presale Gagal: ${res.error}`, 'error');
+          if (res.error && res.error.includes('login')) openLoginModal();
+        }
+      });
+    }
+
+    function triggerDexSnipe() {
+      const amt = parseFloat(document.getElementById('inputSol').value) || 0.1;
+      addLog(`🚀 Worker Buy mengeksekusi DEX Swap via Jupiter: ${amt} SOL...`);
+      fetch('/api/snipe/dex', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount_sol: amt }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          addLog(`🔥 DEX Swap Sukses! TX: ${res.tx_hash}`, 'success');
+          refreshWallet();
+        } else {
+          addLog(`❌ DEX Swap Gagal: ${res.error}`, 'error');
+          if (res.error && res.error.includes('login')) openLoginModal();
+        }
+      });
+    }
+
+    function triggerSellSnipe(pct) {
+      if (!confirm(`Konfirmasi: Jual ${pct}% token $1WIN Anda via Jupiter Swap?`)) return;
+      addLog(`🔴 Worker Sell mengeksekusi One-Click Sell (${pct}% token $1WIN)...`);
+      fetch('/api/snipe/sell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ percentage: pct }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          addLog(`🎉 One-Click Sell Sukses! ${res.message} (TX: ${res.tx_hash})`, 'success');
+          refreshWallet();
+        } else {
+          addLog(`❌ Sell Gagal: ${res.error}`, 'error');
+          if (res.error && res.error.includes('login')) openLoginModal();
+        }
+      });
+    }
+
+    // Auto-detect Telegram Mini App (In-App) or URL query string (?auth_id=123)
+    function checkUrlAuth() {
+      // 1. Cek Telegram Mini App In-App SDK context (prioritas tertinggi!)
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          const tg = window.Telegram.WebApp;
+          tg.ready();
+          tg.expand();
+          const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+          if (u && u.id) {
+            submitAutoAuthId(u.id, u.first_name, u.username);
+            return;
+          }
+        } catch(e) {
+          console.error("Telegram Mini App init error:", e);
+        }
+      }
+
+      // 2. Cek query parameter (?auth_id=...)
+      const params = new URLSearchParams(window.location.search);
+      const authId = params.get('auth_id');
+      if (authId) {
+        submitAutoAuthId(authId);
+        return;
+      }
+
+      // 3. Cek localStorage
+      const saved = localStorage.getItem('tg_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          renderUserProfile(currentUser);
+        } catch(e) {}
+      } else {
+        renderUserProfile(null);
+      }
+    }
+
+    function submitAutoAuthId(uid, firstName, username) {
+      fetch('/api/auth/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          user_id: parseInt(uid),
+          first_name: firstName || `User_${uid}`,
+          username: username || ''
+        }),
+        credentials: 'include'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          currentUser = res.user;
+          localStorage.setItem('tg_user', JSON.stringify(currentUser));
+          renderUserProfile(currentUser);
+          refreshWallet();
+          addLog(`✅ Sesi Mini App Terhubung: ${currentUser.first_name} (ID: ${uid})`, 'success');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      checkUrlAuth();
+      pollStatus();
+      setInterval(pollStatus, 2000);
+      refreshWallet();
+    });
+  </script>
+</body>
+</html>

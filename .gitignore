@@ -1,0 +1,27 @@
+# Credentials & Sensitive Configs
+.env
+config.json
+core/config.json
+core/.env
+*.key
+*.pem
+private_keys.txt
+wallets.json
+*wallets*.json
+core/*wallets*.json
+
+# Python Cache & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Logs & Temporary Data
+*.log
+logs/
+*.sqlite
+*.db
+.DS_Store
+Thumbs.db
