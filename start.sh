@@ -310,20 +310,30 @@ p.write_text(json.dumps(d, indent=2), encoding='utf-8')
       read -r -p "Lanjutkan konfigurasi otomatis Nginx? (y/n): " confirm_nginx
       if [[ "$confirm_nginx" =~ ^[Yy]$ ]]; then
         echo ""
-        echo "[1/4] Memeriksa & menginstal Nginx serta Certbot..."
+        echo "[1/4] Memeriksa dependensi Nginx, Certbot & Firewall sistem..."
         if command -v apt-get >/dev/null 2>&1; then
-          sudo apt-get update -y && sudo apt-get install -y nginx certbot python3-certbot-nginx || true
+          sudo apt-get update -y && sudo apt-get install -y nginx certbot python3-certbot-nginx ufw || true
         elif command -v yum >/dev/null 2>&1; then
           sudo yum install -y epel-release && sudo yum install -y nginx certbot python3-certbot-nginx || true
         fi
 
-        echo "[2/4] Membuat konfigurasi Nginx untuk botmicin.web.id (Upstream: http://${AUTO_LOCAL_IP}:6000)..."
+        echo "[*] Membuka port 80 dan 443 di firewall OS (UFW & iptables)..."
+        if command -v ufw >/dev/null 2>&1; then
+          sudo ufw allow 80/tcp >/dev/null 2>&1 || true
+          sudo ufw allow 443/tcp >/dev/null 2>&1 || true
+          sudo ufw allow 'Nginx Full' >/dev/null 2>&1 || true
+          sudo ufw reload >/dev/null 2>&1 || true
+        fi
+        sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null || true
+        sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
+
+        echo "[2/4] Menulis konfigurasi Nginx untuk botmicin.web.id (Upstream: http://${AUTO_LOCAL_IP}:6000)..."
         NGINX_CONF="/etc/nginx/sites-available/botmicin"
         if [ ! -d "/etc/nginx/sites-available" ]; then
           NGINX_CONF="/etc/nginx/conf.d/botmicin.conf"
         fi
 
-        sudo bash -c "cat > '$NGINX_CONF' << EOF
+        cat << EOF | sudo tee "$NGINX_CONF" > /dev/null
 server {
     listen 80;
     server_name botmicin.web.id www.botmicin.web.id;
@@ -331,30 +341,50 @@ server {
     location / {
         proxy_pass http://${AUTO_LOCAL_IP}:6000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \\\$http_upgrade;
-        proxy_set_header Connection \"upgrade\";
-        proxy_set_header Host \\\$host;
-        proxy_set_header X-Real-IP \\\$remote_addr;
-        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \\\$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
-EOF"
+EOF
 
         if [ -d "/etc/nginx/sites-enabled" ]; then
+          sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
           sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/botmicin
         fi
 
-        echo "[3/4] Menguji & me-reload Nginx..."
-        sudo nginx -t && sudo systemctl reload nginx || sudo service nginx reload || true
+        echo "[3/4] Menguji & me-restart Nginx service..."
+        sudo nginx -t
+        sudo systemctl enable nginx 2>/dev/null || true
+        sudo systemctl restart nginx 2>/dev/null || sudo service nginx restart || true
 
         echo "[4/4] Menerbitkan sertifikat SSL gratis (Let's Encrypt Certbot)..."
-        echo "Pastikan DNS A record botmicin.web.id sudah mengarah ke IP VPS ini!"
-        sudo certbot --nginx -d botmicin.web.id --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
-
-        echo ""
-        echo "[OK] Setup Reverse Proxy Nginx & SSL selesai!"
-        echo "     Web Terminal dapat diakses di: https://botmicin.web.id"
+        echo "Pastikan DNS A record botmicin.web.id sudah mengarah ke IP 20.204.42.222!"
+        if sudo certbot --nginx -d botmicin.web.id --non-interactive --agree-tos --register-unsafely-without-email --redirect; then
+          echo ""
+          echo "======================================================================"
+          echo "✅ [SUKSES] Setup Reverse Proxy Nginx & SSL Berhasil!"
+          echo "🌐 Web Terminal & Mini App Aktif di: https://botmicin.web.id"
+          echo "======================================================================"
+        else
+          echo ""
+          echo "======================================================================"
+          echo "⚠️  [PERHATIAN] Certbot timeout saat memvalidasi port 80!"
+          echo "    Penyebab: Firewall Azure (Network Security Group / NSG) memblokir port 80 & 443."
+          echo ""
+          echo "    Langkah Buka Port di Azure Portal:"
+          echo "    1. Masuk ke Azure Portal -> Virtual Machines -> ydc-studio"
+          echo "    2. Pilih menu 'Networking' di bilah kiri"
+          echo "    3. Klik 'Add inbound port rule'"
+          echo "    4. Destination port ranges: 80, 443"
+          echo "    5. Protocol: TCP | Action: Allow | Name: Allow-Web"
+          echo "    6. Klik 'Add'"
+          echo "    Setelah rule Azure tersimpan, jalankan ulang menu [8] ini!"
+          echo "======================================================================"
+        fi
       else
         echo "[*] Dibatalkan."
       fi
